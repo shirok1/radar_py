@@ -107,10 +107,13 @@ class YoLov5TRT(object):
         output = host_outputs
         return output
 
-    def destroy(self):
+
+
+    def __del__(self):
         # 将context栈顶的ICudaContext对象弹出，不再激活
         self.ctx.pop()
         self.stream.is_done()
+        self.ctx.detach()
 
 
 

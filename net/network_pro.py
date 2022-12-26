@@ -77,20 +77,19 @@ class Predictor(object):
             self.net2_grid.append([self.net2_num_anchors[0], int(self.net2_inpHeight / i), int(self.net2_inpWidth / i)])
 
     def pub_sub_init(self, pub, cam):
-        # 管道初始化
         """
+        管道初始化
         :param pub
         :param cam
         """
         self.pub = pub
         self.sub = cam
 
-    def detect_cars(self, src):
+    def detect_cars(self, src) -> np.ndarray:
         """
+        检测函数
         :param src 3072x2048
-        :param 
         """
-        # 检测函数
         if not self.using_net:
             return np.array([]), src
         else:
@@ -127,7 +126,7 @@ class Predictor(object):
             if self.img_show and res.shape != 0:  
                 self.net_show(res)
             res = armor_filter(res)
-            return res, self.img_src
+            return res
 
     # 第二层网络的推理
     def detect_armor(self, src):
@@ -498,8 +497,8 @@ class Predictor(object):
         停止tensorrt线程，在关闭之前必须做这个操作，不然tensorrt的streamer可能无法释放
         """
         if self.using_net:
-            self._net1.destroy()
-            self._net2.destroy()
+            del self._net1
+            del self._net2
 
     def net_show(self, res):
         """绘制函数"""
@@ -530,34 +529,6 @@ class Predictor(object):
                 cv.rectangle(self.img_src, c1, c2, color, -1, cv.LINE_AA)  # filled
                 cv.putText(self.img_src, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf,
                            lineType=cv.LINE_AA)
-
-    def record_on_clicked(self) -> None:
-        if not self.record_state:
-            fourcc = cv.VideoWriter_fourcc(*'MP42')
-            time_ = time.localtime(time.time())
-            save_title = f"resources/records/{time_.tm_mday}_{time_.tm_hour}_" \
-                         f"{time_.tm_min}"
-            _, cam = self.name.split("_")
-            self.record_object = cv.VideoWriter(save_title + "_" + cam + ".avi", fourcc, 10,
-                                                cam_config[self.name]['size'])
-            self._record_thr = threading.Thread(target=self.mul_record)
-            self._record_thr.daemon = True
-            self.record_state = True
-            self._record_thr.start()
-        else:
-            self.record_state = False
-            self._record_thr.join()
-            del self.record_object
-
-    def mul_record(self):
-        while True:
-            if self.record_state:
-                self.lock.acquire()
-                self.lock.wait()
-                self.record_object.write(self.img_src)
-                self.lock.release()
-            else:
-                break
 
 
 if __name__ == '__main__':

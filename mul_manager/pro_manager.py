@@ -22,7 +22,6 @@ def thread_detect(event, que, name):
     import time
     # 多线程接收写法
     predictor1 = Predictor(name)
-    cap = cv2.VideoCapture("/home/hoshino/CLionProjects/hitsz_radar/resources/two_cam/1.mp4")
     count = 0
     t1 = time.time()
     t3 = time.time()
@@ -47,7 +46,7 @@ def thread_detect(event, que, name):
 
 def pub(event, que, data):
     """
-    pub 函数
+    线程间数据发送函数
     :param event 多进程事件
     :param que 传输队列
     :param data 待传输数据
@@ -65,8 +64,8 @@ def pub(event, que, data):
 
 def sub(event, que):
     """
-    sub 函数
-    :param event 多进程事件
+    线程间数据接收函数
+    :param event 多线程事件
     :param que 传输队列
     """
     _wait = event.wait(timeout=0.1)
@@ -82,49 +81,73 @@ def sub(event, que):
         return False, None
 
 
-def process_detect(event, que, event_close, record, name):
-    # 多线程接收写法
-    from camera.cam_hk_v3 import Camera_HK
+def process_detect(tx_event, que, name, event_list):
+    """
+    接收原始数据并处理 多线程主函数
+    :param tx_event: 数据发送事件
+    :param que: 数据队列
+    :param name: 相机名
+    :param event_list: 事件列表 (其实是map)
+    """
+    from camera.cam import create_camera
     from net.network_pro import Predictor
     from config import using_video
-    print(f"子进程开始: {name}")
+    from record.record_frame import RecordWriteManager
+    print(f"子线程开始: {name}")
     predictor = Predictor(name)
-    cam = Camera_HK(name, using_video)
+    cam = create_camera(name, using_video, event_list)
     count = 0
     count_error = 0
     t1 = 0
+    is_record = False
+    record = None
     try:
-        while not event_close.is_set():
-            if record.is_set():
-                predictor.record_on_clicked()
-                record.clear()
+        while not event_list['close'].is_set():
+            # 录制
+            if event_list['record'].is_set():
+                # predictor.record_on_clicked()
+                if not is_record:
+                    record = RecordWriteManager(name)
+                    is_record = True
+                else:
+                    del record
+                    is_record = False
+                event_list['record'].clear()
+
             result, frame = cam.get_img()
+            # TODO: 记录图像数据
             if result and frame is not None:
                 t3 = time.time()
-                res = predictor.detect_cars(frame)
-                pub(event, que, res)
+                res = predictor.detect_cars(frame)  # 网络处理
+                # TODO: 记录网络数据
+                if is_record:
+                    record.write(video_data=frame, net_data=res)
+                pub(tx_event, que, (res, frame))
                 # time.sleep(0.04)
                 t1 = t1 + time.time() - t3
                 count += 1
                 if count == 100:
                     fps = float(count) / t1
-                    print(f'{name} count:{count} fps: {int(fps)}')
+                    print(f'{name} count:{count} fps: {int(fps)} 传输等待队列: {que.qsize()}')
                     count = 0
                     t1 = 0
             else:
+                # 错误计数
                 count_error += 1
-                pub(event, que, [result, frame])
+                pub(tx_event, que, [result, frame])
                 if count_error == 10:
+                    print(f"相机出错重启:{name}")
                     cam.destroy()
                     del cam
-                    cam = Camera_HK(name, using_video)
+                    cam = create_camera(name, using_video, event_list)
                     count_error = 0
         predictor.stop()
         cam.destroy()
         print(f"相机网络子进程:{name} 退出")
     except Exception as e:
         print(f"相机网络子进程:{name} 寄了\n {e}")
-    sys.exit()
+        raise e
+    # sys.exit()
 
 
 def process_detect_rs(event, que, event_close, record, name):
