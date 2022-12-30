@@ -1,0 +1,26 @@
+{
+    "nixgl": {
+        "branch": "main",
+        "description": "A wrapper tool for nix OpenGL application",
+        "homepage": null,
+        "owner": "guibou",
+        "repo": "nixGL",
+        "rev": "7165ffbccbd2cf4379b6cd6d2edd1620a427e5ae",
+        "sha256": "1wc85xqnq2wb008y9acb29jbfkc242m9697g2b8j6q3yqmfhrks1",
+        "type": "tarball",
+        "url": "https://github.com/guibou/nixGL/archive/7165ffbccbd2cf4379b6cd6d2edd1620a427e5ae.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "nixpkgs": {
+        "branch": "nixpkgs-unstable",
+        "description": "Nix Packages collection",
+        "homepage": "",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e37ef84b478fa8da0ced96522adfd956fde9047a",
+        "sha256": "03qak39mn2142gp6zglrzrkdbig6h4r3da1psmvf3q2dwcw3zsfv",
+        "type": "tarball",
+        "url": "https://github.com/NixOS/nixpkgs/archive/e37ef84b478fa8da0ced96522adfd956fde9047a.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    }
+}
