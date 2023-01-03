@@ -25,7 +25,9 @@ class location_Delaunay(object):
         self.debug_mode = debug
         if cam_side in ["cam_left", "cam_right"]:
             t = Delaunary_points[int(debug)][cam_side]
+            # 矩形（？）点
             self.cam_rect = t[0]
+            # 德劳内点
             self.c_points = np.array(t[1]).reshape((-1, 3)) * 1000
             self.c_points = self.c_points[list(np.array(choose) - 1)]
             self._rvec = cam_config[cam_side]["rvec"]
@@ -46,6 +48,7 @@ class location_Delaunay(object):
             [self.cam_rect[0], self.cam_rect[1] + self.cam_rect[3] - 1],
             [self.cam_rect[0] + self.cam_rect[2] - 1, self.cam_rect[1] + self.cam_rect[3] - 1]
         ])
+        # 划分德劳内区域
         try:
             for i in self.cam_points:
                 self.Dly.insert(tuple(i.tolist()))
@@ -56,14 +59,17 @@ class location_Delaunay(object):
         self.init_ok = True
 
     def _get_region(self):
+        # 反投影德劳内坐标点
         points = cv.projectPoints(self.c_points, self._rvec,
                                   self._tvec, self._K_O, self._C_O)[0].astype(int).reshape(-1, 2)  # 得到反投影坐标
+        # 只选用在在图像中的点
         rows = (points[:, 0] >= self.cam_rect[0]) & (points[:, 0] <= self.cam_rect[0] + self.cam_rect[2]) \
                & (points[:, 1] >= self.cam_rect[1]) & (points[:, 1] <= self.cam_rect[1] + self.cam_rect[3])
         self.cam_points = points[rows]
         self.w_points = self.c_points[rows] / 1000
 
     def push_T(self, rvec, tvec):
+        # 德劳内划分 供调用
         self._rvec = rvec
         self._tvec = tvec
         self._get_region()
@@ -80,10 +86,12 @@ class location_Delaunay(object):
         self.init_ok = True
 
     def get_point_pos(self, l: np.ndarray, detect_type: int):
+        # 输入4维向量 输出3维向量（点坐标）
         w_point = np.ndarray((3, 1), dtype=np.float64) * np.nan
         if not self.init_ok or l.shape[0] != 4:
             pass
         else:
+            # 最近点
             if detect_type == 2:
                 try:
                     res = self.Dly.findNearest(tuple(l[1:3]))[1]
@@ -93,14 +101,18 @@ class location_Delaunay(object):
                     print(f"[ERROR] {e}")
             elif detect_type == 1:
                 try:
+                    # 截去输入的第一维cls
+                    # res[0]：类型 res[1]：边 res[2]：顶点
                     res = self.Dly.locate(tuple(l[1:3]))
                     value = res[0]
                     if value == cv.SUBDIV2D_PTLOC_ERROR:
                         return np.ndarray((3, 1), dtype=np.float64) * np.nan
                     if value == cv.SUBDIV2D_PTLOC_INSIDE:
+                        # 在划分的德劳内三角形区域内
                         first_edge = res[1]
                         second_edge = self.Dly.getEdge(first_edge, cv.SUBDIV2D_NEXT_AROUND_LEFT)
                         third_edge = self.Dly.getEdge(second_edge, cv.SUBDIV2D_NEXT_AROUND_LEFT)
+                        # 计算位置
                         w_point = self._cal_pos_triangle(
                             np.array([self.Dly.edgeDst(first_edge)[1],
                                       self.Dly.edgeDst(second_edge)[1],
@@ -108,6 +120,7 @@ class location_Delaunay(object):
                                       ]),
                             l[1:3]
                         )
+                    # 在边缘
                     if value == cv.SUBDIV2D_PTLOC_ON_EDGE:
                         first_edge = res[1]
                         w_point = self._cal_pos_edge(
@@ -116,6 +129,7 @@ class location_Delaunay(object):
                                       ]),
                             l[1:3]
                         )
+                    # 在顶点
                     if value == cv.SUBDIV2D_PTLOC_VERTEX:
                         w_point = self._cal_pos_vertex(np.ndarray(self.cam_points[res[2]]))
                 except Exception as e:
@@ -128,9 +142,11 @@ class location_Delaunay(object):
         return w_point
 
     def _cal_pos_edge(self, pts: np.ndarray, pt) -> np.ndarray:
+        # 计算在边上的点的坐标
         if not self._check(pts):
             return np.ndarray((3, 1), dtype=np.float64) * np.nan
         else:
+            # 定比分点
             magnitude1 = pts[1] - pts[0]
             magnitude3 = pt - pts[0]
             k_1 = np.dot(magnitude1, magnitude3) / self._mag_pow(magnitude1)
@@ -139,6 +155,7 @@ class location_Delaunay(object):
             return h_1 * (1 - k_1) + h_2 * k_1
 
     def _cal_pos_triangle(self, pts: np.ndarray, pt) -> np.ndarray:
+        # 计算三角形内点的坐标
         if not self._check(pts):
             return np.ndarray((3, 1), dtype=np.float64) * np.nan
         else:
@@ -165,6 +182,7 @@ class location_Delaunay(object):
             return h_1 * (1 - k_1 - k_2) + h_2 * k_1 + h_3 * k_2
 
     def _cal_pos_vertex(self, pts) -> np.ndarray:
+        # 顶点处点坐标
         if not self._check(pts):
             return np.ndarray((3, 1), dtype=np.float64) * np.nan
         else:
@@ -173,6 +191,7 @@ class location_Delaunay(object):
             return self.w_points[num]
 
     def _check(self, pts: np.ndarray) -> bool:
+        # 点不能是边缘？
         for i in pts:
             res = i == self.rect_points
             rows = (res[:, 0] == True) & (res[:, 1] == True)
@@ -182,6 +201,7 @@ class location_Delaunay(object):
 
     @staticmethod
     def _mag_pow(magnitude):
+        # 模平方？
         return pow(magnitude[0], 2) + pow(magnitude[1], 2)
 
     def get_points(self):
