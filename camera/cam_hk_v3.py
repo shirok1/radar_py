@@ -4,42 +4,38 @@
 created by 李龙 2021/11
 最终修改 by 陈希峻 2022/11
 """
-import re
-import time
-import sys
-import threading
-import termios
-from ctypes import *
 import cv2 as cv
 import numpy as np
+from loguru import logger
+
 from camera.MvImport.MvCameraControl_class import *
-from config import cam_config
-from camera.cam import Camera
+from config_type import HikCameraDriverConfigExt
 
 
-class Camera_HK(Camera):
+class Camera_HK:
     """
-    相机类
+    海康机器人相机类。
+    通过加载 Hikrobot MVS 提供的动态库来实现，
+    需要设置 `MVCAM_COMMON_RUNENV`
+    和 `LD_LIBRARY_PATH` 环境变量。
     """
 
-    def __init__(self, type_, event_list=None):
+    def __init__(self, config: HikCameraDriverConfigExt):
         """
-        @param type: 相机左右类型
-        @param event_list: 事件列表
+        @param config: 相机配置
         """
-        self.__type = type_
-        self.__camera_config = cam_config[self.__type]
-        self.__id = self.__camera_config['id']
-        self.__size = self.__camera_config['size']
-        self.__roi = self.__camera_config['roi']
-        self.__img = np.ndarray((self.__size[1], self.__size[0], 3), dtype="uint8")
-        self.__exposure = self.__camera_config['exposure']
-        self.__gain = self.__camera_config['gain']
+        self.__camera_config = config
+        self.__id = self.__camera_config.camera_id
+        self.__roi = self.__camera_config.roi
+        self.__exposure = self.__camera_config.exposure
+        self.__gain = self.__camera_config.gain
+        self.__img = None
+
         # ch:创建相机实例 | en:Creat Camera Object
         self.cam = MvCamera()
 
         SDKVersion = MvCamera.MV_CC_GetSDKVersion()
-        print("SDKVersion[0x%x]" % SDKVersion)
+        logger.info("SDKVersion[0x%x]" % SDKVersion)
 
         deviceList = MV_CC_DEVICE_INFO_LIST()
         tlayerType = MV_USB_DEVICE
@@ -47,12 +43,12 @@ class Camera_HK(Camera):
         # ch:枚举设备 | en:Enum device
         ret = MvCamera.MV_CC_EnumDevices(tlayerType, deviceList)
         if ret != 0:
-            print("enum devices fail! ret[0x%x]" % ret)
+            logger.error("enum devices fail! ret[0x%x]" % ret)
             self.init_ok = False
             return
 
         if deviceList.nDeviceNum == 0:
-            print("find no device!")
+            logger.error("find no device!")
             self.init_ok = False
 
         Find = False
@@ -68,7 +64,7 @@ class Camera_HK(Camera):
                 if self.__id == strSerialNumber:
                     nConnectionNum = i
                     Find = True
-                print("user serial number: %s" % strSerialNumber)
+                logger.info("user serial number: %s" % strSerialNumber)
         if Find:
             # ch:选择设备并创建句柄 | en:Select device and create handle
             self.__stDeviceList = cast(deviceList.pDeviceInfo[int(nConnectionNum)],
@@ -76,78 +72,78 @@ class Camera_HK(Camera):
 
             ret = self.cam.MV_CC_CreateHandle(self.__stDeviceList)
             if ret != 0:
-                print("create handle fail! ret[0x%x]" % ret)
+                logger.error("create handle fail! ret[0x%x]" % ret)
                 self.init_ok = False
 
             # ch:打开设备 | en:Open device
             ret = self.cam.MV_CC_OpenDevice(MV_ACCESS_Exclusive, 0)
             if ret != 0:
-                print("open device fail! ret[0x%x]" % ret)
+                logger.error("open device fail! ret[0x%x]" % ret)
                 self.init_ok = False
 
             ret = self.cam.MV_CC_SetEnumValue("TriggerMode", MV_TRIGGER_MODE_OFF)
             if ret != 0:
-                print("set TriggerMode failed! ret [0x%x]" % ret)
+                logger.error("set TriggerMode failed! ret [0x%x]" % ret)
                 self.init_ok = False
 
             ret = self.cam.MV_CC_SetEnumValue("ExposureMode", MV_EXPOSURE_AUTO_MODE_OFF)
             if ret != 0:
-                print("set height failed! ret [0x%x]" % ret)
+                logger.error("set height failed! ret [0x%x]" % ret)
                 self.init_ok = False
 
             ret = self.cam.MV_CC_SetEnumValue("GainAuto", MV_GAIN_MODE_OFF)
             if ret != 0:
-                print("set GainAuto failed! ret [0x%x]" % ret)
+                logger.error("set GainAuto failed! ret [0x%x]" % ret)
                 self.init_ok = False
             ret = self.cam.MV_CC_SetEnumValue("PixelFormat", PixelType_Gvsp_BayerRG8)
             if ret != 0:
-                print("set PixelFormat failed! ret [0x%x]" % ret)
+                logger.error("set PixelFormat failed! ret [0x%x]" % ret)
                 self.init_ok = False
             ret = self.cam.MV_CC_SetBoolValue("BlackLevelEnable", False)
             if ret != 0:
-                print("set BlackLevelEnable failed! ret [0x%x]" % ret)
+                logger.error("set BlackLevelEnable failed! ret [0x%x]" % ret)
                 self.init_ok = False
 
             ret = self.cam.MV_CC_SetEnumValue("BalanceWhiteAuto", MV_BALANCEWHITE_AUTO_CONTINUOUS)
             if ret != 0:
-                print("set BalanceWhiteAuto failed! ret [0x%x]" % ret)
+                logger.error("set BalanceWhiteAuto failed! ret [0x%x]" % ret)
                 self.init_ok = False
 
             ret = self.cam.MV_CC_SetEnumValue("AcquisitionMode", MV_ACQ_MODE_CONTINUOUS)
             if ret != 0:
-                print("set AcquisitionMode failed! ret [0x%x]" % ret)
+                logger.error("set AcquisitionMode failed! ret [0x%x]" % ret)
                 self.init_ok = False
 
             ret = self.cam.MV_CC_SetBoolValue("AcquisitionFrameRateEnable", False)
             if ret != 0:
-                print("set AcquisitionFrameRateEnable failed! ret [0x%x]" % ret)
+                logger.error("set AcquisitionFrameRateEnable failed! ret [0x%x]" % ret)
                 self.init_ok = False
 
             ret = self.cam.MV_CC_SetIntValue("Height", int(self.__roi[3]))
             if ret != 0:
-                print("set height failed! ret [0x%x]" % ret)
+                logger.error("set height failed! ret [0x%x]" % ret)
                 self.init_ok = False
 
             ret = self.cam.MV_CC_SetIntValue("Width", int(self.__roi[2]))
             if ret != 0:
-                print("set width failed! ret [0x%x]" % ret)
+                logger.error("set width failed! ret [0x%x]" % ret)
                 self.init_ok = False
             ret = self.cam.MV_CC_SetIntValue("OffsetX", int(self.__roi[0]))
             if ret != 0:
-                print("set width failed! ret [0x%x]" % ret)
+                logger.error("set width failed! ret [0x%x]" % ret)
                 self.init_ok = False
             ret = self.cam.MV_CC_SetIntValue("OffsetY", int(self.__roi[1]))
             if ret != 0:
-                print("set OffsetY failed! ret [0x%x]" % ret)
+                logger.error("set OffsetY failed! ret [0x%x]" % ret)
                 self.init_ok = False
             ret = self.cam.MV_CC_SetFloatValue("ExposureTime", self.__exposure)
             if ret != 0:
-                print("start grabbing fail! ret[0x%x]" % ret)
+                logger.error("start grabbing fail! ret[0x%x]" % ret)
                 self.init_ok = False
 
             ret = self.cam.MV_CC_SetFloatValue("Gain", float(self.__gain))
             if ret != 0:
-                print("start grabbing fail! ret[0x%x]" % ret)
+                logger.error("start grabbing fail! ret[0x%x]" % ret)
                 self.init_ok = False
 
             # ch:获取数据包大小 | en:Get payload size
@@ -155,24 +151,25 @@ class Camera_HK(Camera):
             memset(byref(stParam), 0, sizeof(MVCC_INTVALUE))
             ret = self.cam.MV_CC_GetIntValue("PayloadSize", stParam)
             if ret != 0:
-                print("get payload size fail! ret[0x%x]" % ret)
+                logger.error("get payload size fail! ret[0x%x]" % ret)
                 self.init_ok = False
             self.__nPayloadSize = stParam.nCurValue
             self.__data_buf = (c_ubyte * self.__nPayloadSize)()
             # ch:开始取流 | en:Start grab image
             ret = self.cam.MV_CC_StartGrabbing()
             if ret != 0:
-                print("start grabbing fail! ret[0x%x]" % ret)
+                logger.error("start grabbing fail! ret[0x%x]" % ret)
                 self.init_ok = False
             self.__stDeviceList = MV_FRAME_OUT_INFO_EX()
             memset(byref(self.__stDeviceList), 0, sizeof(self.__stDeviceList))
+            self.init_ok = True
         else:
             self.init_ok = False
 
     def work_thread(self) -> bool:
-        ret = self.cam.MV_CC_GetOneFrameTimeout(self.__data_buf, self.__nPayloadSize, self.__stDeviceList, 100)
+        ret = self.cam.MV_CC_GetOneFrameTimeout(self.__data_buf, self.__nPayloadSize, self.__stDeviceList, 1000)
         if ret == 0:
-            # print("get one frame: Width[%d], Height[%d], nFrameNum[%d]" % (
+            # logger.info("get one new_data: Width[%d], Height[%d], nFrameNum[%d]" % (
             #     self.__stDeviceList.nWidth, self.__stDeviceList.nHeight, self.__stDeviceList.nFrameNum))
 
             nRGBSize = self.__stDeviceList.nWidth * self.__stDeviceList.nHeight * 3
@@ -189,25 +186,25 @@ class Camera_HK(Camera):
 
             ret = self.cam.MV_CC_ConvertPixelType(stConvertParam)
             if ret != 0:
-                print("convert pixel fail! ret[0x%x]" % ret)
+                logger.error("convert pixel fail! ret[0x%x]" % ret)
                 return False
             else:
                 img_buff = (c_ubyte * stConvertParam.nDstLen)()
                 memmove(byref(img_buff), stConvertParam.pDstBuffer, stConvertParam.nDstLen)
                 self.__img = np.asarray(img_buff).reshape(self.__roi[3], self.__roi[2], 3)
-                self.__img = cv.copyMakeBorder(self.__img, 0, self.__roi[1], 0, 0, cv.BORDER_CONSTANT, value=(0, 0, 0))
+                # self.__img = cv.copyMakeBorder(self.__img, 0, self.__roi[1], 0, 0, cv.BORDER_CONSTANT, value=(0, 0, 0))
                 return True
         else:
-            print("get one frame fail, ret[0x%x]" % ret)
+            logger.error("get one new_data fail, ret[0x%x]" % ret)
             return False
             # return True
 
-    def get_img(self) -> (bool, np.ndarray):
+    def get_img(self) -> tuple[bool, np.ndarray]:
         if self.init_ok:
             result = self.work_thread()
             return result, self.__img
         else:
-            # print("init is failed dangerous!!!")
+            # logger.error("init is failed dangerous!!!")
             return False, self.__img
 
     def destroy(self) -> None:
@@ -215,31 +212,43 @@ class Camera_HK(Camera):
         try:
             ret = self.cam.MV_CC_StopGrabbing()
             if ret != 0:
-                print("stop grabbing fail! ret[0x%x]" % ret)
+                logger.error("stop grabbing fail! ret[0x%x]" % ret)
 
             # ch:关闭设备 | Close device
             ret = self.cam.MV_CC_CloseDevice()
             if ret != 0:
-                print("close deivce fail! ret[0x%x]" % ret)
+                logger.error("close deivce fail! ret[0x%x]" % ret)
 
             # ch:销毁句柄 | Destroy handle
             ret = self.cam.MV_CC_DestroyHandle()
             if ret != 0:
-                print("destroy handle fail! ret[0x%x]" % ret)
+                logger.error("destroy handle fail! ret[0x%x]" % ret)
         except Exception as e:
-            print(e)
+            logger.error(e)
         self.init_ok = False
+
+    def __del__(self):
+        """
+        保底销毁，防止程序意外退出时未释放相机资源
+        """
+        if self.init_ok:
+            self.destroy()
 
 
 if __name__ == "__main__":
     import time
-    import sys
 
-    sys.path.append("..")
     cv.namedWindow("test", cv.WINDOW_NORMAL)
 
-    name = "cam_left"  # 唯一要改的参数
-    cam_test = Camera_HK(name)
+    cam_test_config = HikCameraDriverConfigExt(
+        roi=(0, 0, 3072, 2048),
+        # camera_id="J87631625",  # 调整为要测试的相机的 ID
+        # camera_id="J37877236",  # 调整为要测试的相机的 ID
+        camera_id="00J59583857",  # 调整为要测试的相机的 ID
+        exposure=15000,
+        gain=20,
+    )
+    cam_test = Camera_HK(cam_test_config)
     t1 = time.time()
     count_fps = 0
     count_s = 0
@@ -256,13 +265,14 @@ if __name__ == "__main__":
                 fps = count_fps / (t2 - t1)
                 count_fps = 0
                 t1 = time.time()
-                print(f"fps {fps}")
+                logger.info(f"fps {fps}")
             if key == ord('q') or not res or count_s >= count_max:
                 cam_test.destroy()
                 break
             if key == ord('s'):
-                cv.imwrite(f"../resources/cam_data/{name}/{count_s}.jpg", frame)
-                print(f"../resources/cam_data/{name}/{count_s}.jpg")
+                path = f"../resources/cam_data/{cam_test_config.camera_id}/{count_s}.jpg"
+                cv.imwrite(path, frame)
+                logger.info(path)
                 count_s += 1
         else:
             break

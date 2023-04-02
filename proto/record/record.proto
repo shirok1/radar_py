@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+message Record {
+  NetData net_data = 2;
+  NpArray lidar_data = 3;
+}
+
+message RecordSequence {
+  repeated Record records = 1;
+}
+
+message NetData {
+  NpArray slot1 = 1;
+  NpArray slot2 = 2;
+}
+
+message NpArray {
+  string dtype = 1;
+  repeated uint32 shape = 3;
+  bytes data = 4;
+}
