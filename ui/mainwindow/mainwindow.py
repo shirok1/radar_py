@@ -72,14 +72,28 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
 
         self.draw_module = drawing()  # 绘图及信息管理类
         self.text_api = lambda x: self.draw_module.update(x)
-        self.lidar = Radar('cam_left', text_api=self.text_api, imgsz=cam_config['cam_left']["size"], queue_size=100)
+        # self.lidar = Radar('cam_left', text_api=self.text_api, imgsz=cam_config['cam_left']["size"], queue_size=100)
 
         # if USEABLE['Lidar']:
         #     self.lidar.start()
         # else:
         #     # 读取预定的点云文件
         #     self.lidar.preload()
-        self.lidar.preload()
+        # self.lidar.preload()
+        from service.lidar_service import RdrLiDARService
+        from config_type import RdrLiDARConfig
+        self.lidar = RdrLiDARService(RdrLiDARConfig(
+            resolution=(2048, 3072),
+            camera_name="cam_left",
+            e_0=np.mat([
+                [0.0185759, -0.999824, 0.00251985, -0.0904854],
+                [0.0174645, -0.00219543, -0.999845, -0.132904],
+                [0.999675, 0.018617, 0.0174206, -0.421934],
+                [0, 0, 0, 1]
+            ]),
+            endpoint="tcp://127.0.0.1:8200",
+        ))
+        self.lidar.start()
 
         self.sp = SolvePnp(self.pnp_api)  # pnp解算
 
