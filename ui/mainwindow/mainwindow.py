@@ -328,7 +328,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
             self.sp.save()
             self.sp.clc()
             self.pnp_textBrowser.clear()
-            self._update_epnp(self.sp.translation, self.sp.rotation, self.view_change)
+            self._update_epnp(self.sp.tvec, self.sp.rvec, self.view_change)
             self.draw_module.info_update_dly(self.loc_alarm.get_draw(0))
             self.draw_module.info_update_reproject(self.repo_left.get_scene_region())
 

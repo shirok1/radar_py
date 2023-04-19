@@ -5,24 +5,34 @@ created by 黄继凡 2021/1
 """
 import cv2
 import numpy as np
-from radar_detect.location import CameraLocation
+from loguru import logger
+
 from config import objPoints, objNames, DEBUG, cam_config, enemy2color, enemy_color
+from config_type import CameraConfig
+from radar_detect.location import CameraLocation
 
 
 class SolvePnp(CameraLocation):
     """PNP解算"""
     imgPoints = np.zeros((6, 2), dtype=np.float32)
-    rvec = np.zeros((3, 1), dtype=np.float64)
-    tvec = np.zeros((3, 1), dtype=np.float64)
+    # rvec = np.zeros((3, 1), dtype=np.float64)
+    # tvec = np.zeros((3, 1), dtype=np.float64)
     # 鼠标回调事件
     count = 0  # 计数，依次确定个点图像坐标
 
     def __init__(self, text_api):
-        super(SolvePnp, self).__init__(self.rvec, self.tvec)
+        super(SolvePnp, self).__init__(
+            np.zeros((3, 1), dtype=np.float64),
+            np.zeros((3, 1), dtype=np.float64)
+        )
         self.debug = DEBUG
         self._api = text_api
         self.sp_state = False
         self.side_text = ""
+
+    def load_from_config(self, cam_config: CameraConfig):
+        self.rvec = cam_config.rotate_vec
+        self.tvec = cam_config.transform_vec
 
     def add_point(self, x: int, y: int) -> None:
         """
@@ -41,7 +51,7 @@ class SolvePnp(CameraLocation):
         """
         删除最后一个加入的点
         """
-        if self.count < self.count_max and self.count > 0:
+        if 0 < self.count < self.count_max:
             self.imgPoints[self.count] = np.array([0, 0])
         self._update_info()
 
@@ -68,7 +78,7 @@ class SolvePnp(CameraLocation):
             side_text = f'cam_right'
         self.size = cam_config[side_text]['size']
         self.distCoeffs = cam_config[side_text]['C_0']  # 相机畸变系数
-        self.cameraMatrix = cam_config[side_text]['K_0']    # 相机内参矩阵
+        self.cameraMatrix = cam_config[side_text]['K_0']  # 相机内参矩阵
         self.offset_y = cam_config[side_text]['roi'][1]
         self.count = 0
         self._update_info()
@@ -87,8 +97,8 @@ class SolvePnp(CameraLocation):
         else:
             text = ""
         ca = self.from_checkpoint(f"{name}{text}")
-        self.tvec = ca.translation
-        self.rvec = ca.rotation
+        self.tvec = ca.tvec
+        self.rvec = ca.rvec
 
     def clc(self) -> None:
         """
@@ -137,14 +147,14 @@ class SolvePnp(CameraLocation):
                                                       confidence=0.99,
                                                       flags=cv2.SOLVEPNP_EPNP)
             except Exception as e:
-                print(f"[ERROR] {e}")
+                logger.error(e)
                 self.sp_state = False
                 self._update_info()
                 return False
-            self.rotation = rvec
-            self.translation = tvec
-            print(f"[INFO] rvec:{rvec}")
-            print(f"[INFO] tvec:{tvec}")
+            self.rvec = rvec
+            self.tvec = tvec
+            logger.info(f"rvec: {rvec}")
+            logger.info(f"tvec: {tvec}")
             self.sp_state = True
             self._update_info()
             return True
