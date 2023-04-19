@@ -62,6 +62,8 @@ if __name__ == "__main__":
                 camera_fps = rdr_service.get_fps_getter()
             case _:
                 raise ValueError(f"Unknown camera config: {cam_config}")
+        vcam = VirtualCameraService(name, get_camera_provider(), "/dev/video2", resolution)
+        threads.append(vcam)
 
         match cam_config.net_process:
             case True:
