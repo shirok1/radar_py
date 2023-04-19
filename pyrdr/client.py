@@ -1,12 +1,15 @@
-from loguru import logger
+from typing import Optional
 
-import zmq
 import cv2 as cv
 import numpy as np
+import zmq
+from loguru import logger
 
+import config
+import record.temp_mongo_writer
 from proto.rdr.detected_armor_pb2 import ImageAndArmor, CarInfo
-from proto.rdr.lidar_pb2 import LiDARDepthPixels
 from proto.rdr.encoded_img_pb2 import EncodedImg
+from proto.rdr.lidar_pb2 import LiDARRawPoints
 
 
 class ImageClient:
@@ -21,7 +24,7 @@ class ImageClient:
         self.poller.register(self.socket, zmq.POLLIN)
         # self.socket.close()
 
-    def recv(self, timeout=1000) -> np.ndarray:
+    def recv(self, timeout=1000) -> Optional[np.ndarray]:
         # data = self.socket.recv()
         ok = self.poller.poll(timeout)
         if not ok:
@@ -62,9 +65,15 @@ class LiDARClient:
         self.socket = self.context.socket(zmq.constants.SUB)
         self.socket.connect(endpoint)
         self.socket.subscribe(b'')
+        self.poller = zmq.Poller()
+        self.poller.register(self.socket, zmq.POLLIN)
 
-    def recv(self) -> list[tuple[int, int, float]]:
+    def recv(self) -> Optional[list[tuple[int, int, int]]]:
+        ok = self.poller.poll(1000)
+        if not ok:
+            return None
         data = self.socket.recv()
-        result: LiDARDepthPixels = LiDARDepthPixels.FromString(data)
-        logger.debug(f'Received lidar @{result.timestamp}')
-        return [(p.x, p.y, p.z) for p in result.pixels]
+        result: LiDARRawPoints = LiDARRawPoints.FromString(data)
+        record.temp_mongo_writer.INSTANCE.push_lidar_raw_dump(result, config.current_lidar_name)
+        # logger.debug(f'Received lidar @{result.timestamp}')
+        return [(p.x, p.y, p.z) for p in result.points]

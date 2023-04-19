@@ -4,17 +4,20 @@ created by 李龙 in 2020/11
 最终修改版本 李龙 2021/1/16
 添加注释 林顺喆 2022/12/26
 """
-import numpy as np
 import threading
 import time
+
 import cv2 as cv
+import numpy as np
+from loguru import logger
+
+import record.temp_mongo_writer
 from config import net1_engine, net2_engine, \
-    net1_cls, net2_cls_names, enemy_color, cam_config
+    net1_cls, net2_cls_names, enemy_color
 from net.tensorrtx import YoLov5TRT
 from radar_detect.common import armor_filter
 
-"""
-"""
+
 class Predictor(object):
     """
     格式定义： [N,  [bbox(xyxy),conf,cls,bbox(xyxy),conf,cls,col,N]
@@ -119,7 +122,9 @@ class Predictor(object):
         if self.img_show and res.shape != 0:
             self.net_show(res)
         res = armor_filter(res)
-        return res, self.img_src
+        record.temp_mongo_writer.INSTANCE.push_network_output_np(res)
+        record.temp_mongo_writer.INSTANCE.push_network_output_typed(res)
+        return res
 
     # 第二层网络的推理
     def detect_armor(self, src):

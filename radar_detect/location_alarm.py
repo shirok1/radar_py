@@ -380,25 +380,37 @@ class Alarm(draw_map.CompeteMap):
                                        == armor].reshape(-1)
                         l1[1:] = self._loc_D[camera_type].get_point_pos(l1, detection_type).reshape(-1)
 
+                    debug_dict[str(armor)] = {
+                        "position": [l1[1], l1[2], l1[3]]
+                    }
                     # 对应装甲板位置信息无效，跳过
                     if np.isnan(l1).any():
+                        debug_dict[str(armor)]["status"] = "rejected by nan"
                         continue
+                    # logger.debug(f"B{l1}")
+                    if self.thre_predict[0] <= l1[1] <= self.thre_predict[1]:
+                        pass
                     # 异常值处理
-                    if l1[1] > self.thre_predict[1] or l1[1] < self.thre_predict[0]:
+                    else:
+                        debug_dict[str(armor)]["status"] = "rejected by thre_predict"
                         continue
                     # 装甲板置信度处理
                     # 检测到，涨置信度
                     self._confidence[armor] = min(1.1, self._confidence[armor] + self.con_incre)
                     if self._confidence[armor] < self.con_thre:
+                        debug_dict[str(armor)]["status"] = "rejected by con_thre"
                         continue
                     pred_loc.append(l1.reshape(-1))
+                    debug_dict[str(armor)]["status"] = "ok"
                 else:
+                    debug_dict[str(armor)] = "not shown"
                     # 装甲板未出现，置信度衰减处理
                     if self._confidence[armor] > self.con_thre:
                         self._confidence[armor] -= self.con_decre2
                     else:
                         self._confidence[armor] -= self.con_decre1
                         self._confidence[armor] = max(0., self._confidence[armor])
+            record.temp_mongo_writer.INSTANCE.push_position_update(debug_dict)
             # 更新定位信息
             if len(pred_loc):
                 l_ = np.stack(pred_loc, axis=0)
