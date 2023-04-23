@@ -6,10 +6,11 @@ import zmq
 from loguru import logger
 
 import config
-import record.temp_mongo_writer
 from proto.rdr.detected_armor_pb2 import ImageAndArmor, CarInfo
 from proto.rdr.encoded_img_pb2 import EncodedImg
 from proto.rdr.lidar_pb2 import LiDARRawPoints
+from record.data_recorder import DataRecorder
+from record.cast_helper import data_cast, DataTypeEnum
 
 
 class ImageClient:
@@ -74,6 +75,6 @@ class LiDARClient:
             return None
         data = self.socket.recv()
         result: LiDARRawPoints = LiDARRawPoints.FromString(data)
-        record.temp_mongo_writer.INSTANCE.push_lidar_raw_dump(result, config.current_lidar_name)
+        DataRecorder.push(data_cast[DataTypeEnum.LiDARRawDump](result, config.current_lidar_name))
         # logger.debug(f'Received lidar @{result.timestamp}')
         return [(p.x, p.y, p.z) for p in result.points]

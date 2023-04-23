@@ -11,7 +11,8 @@ import cv2 as cv
 import numpy as np
 from loguru import logger
 
-import record.temp_mongo_writer
+from record.data_recorder import DataRecorder
+from record.cast_helper import data_cast, DataTypeEnum
 from config import net1_engine, net2_engine, \
     net1_cls, net2_cls_names, enemy_color
 from net.tensorrtx import YoLov5TRT
@@ -122,8 +123,8 @@ class Predictor(object):
         if self.img_show and res.shape != 0:
             self.net_show(res)
         res = armor_filter(res)
-        record.temp_mongo_writer.INSTANCE.push_network_output_np(res)
-        record.temp_mongo_writer.INSTANCE.push_network_output_typed(res)
+        DataRecorder.push(*data_cast[DataTypeEnum.NetworkOutputNp], res)
+        DataRecorder.push(*data_cast[DataTypeEnum.NetworkOutputTyped], res)
         return res
 
     # 第二层网络的推理

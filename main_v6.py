@@ -14,11 +14,14 @@ from service.camera_service import HikCameraService
 from service.rdr_service import RdrThread
 # from service.process_thread import ProcessService
 from ui.mainwindow.mainwindow import MainWindow
+from record.data_recorder import DataRecorder
 
 if __name__ == "__main__":
     import time
     logger_name = time.strftime('%Y-%m-%d %H-%M-%S')
     logger.add(f"logs/{logger_name}.log")
+
+    DataRecorder.connect(config.mongo_url)
 
     app = QtWidgets.QApplication(sys.argv)
 

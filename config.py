@@ -10,6 +10,8 @@ import numpy as np
 from real_points import real_points
 from config_type import HikCameraConfig, VideoConfig, CameraConfig, RdrConfig
 
+mongo_url = "mongodb://localhost:27017/"
+
 enemy_color = 0  # 0：敌方为红色；1：敌方为蓝色
 USEABLE = {
     "serial": False,
