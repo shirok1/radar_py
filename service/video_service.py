@@ -94,8 +94,9 @@ class VideoReader(StartStoppableTrait):
             self._frame_provider.push(ndarray)
             self._fps_counter.update()
             # self._frame_pos += 1
-            self._frame_pos = frame.pts
-            if self._frame_pos >= self._total_frame:
+            self._frame_pos = frame.index
+            logger.debug(f"读取到第 {self._frame_pos}/{self._total_frame} 帧")
+            if self._frame_pos + 1 >= self._total_frame:
                 self.reset()
                 return
         # while not self._is_terminated:
@@ -171,9 +172,10 @@ class VideoReader(StartStoppableTrait):
 
     @frame_pos.setter
     def frame_pos(self, frame):
-        if frame < 0 or frame > self._total_frame:
+        logger.debug(f"设置帧位置为 {frame}")
+        if frame < 0 or frame >= self._total_frame:
             logger.warning(f"Frame out of range: {frame} not in [0, {self._total_frame}]")
-            frame = 0 if frame < 0 else self._total_frame
+            frame = 0 if frame < 0 else self._total_frame -1
             # raise ValueError('Frame out of range')
         self._frame_pos = frame
         self._video.seek(frame, stream=self._video_stream)
@@ -195,6 +197,7 @@ class VideoReader(StartStoppableTrait):
 
     @speed.setter
     def speed(self, speed: float):
+        logger.debug(f"设置播放速度为 {speed}")
         if speed <= 0:
             self._speed = 0.001
         else:
@@ -206,6 +209,7 @@ class VideoReader(StartStoppableTrait):
 
     @is_paused.setter
     def is_paused(self, is_paused: bool):
+        logger.debug(f"设置暂停状态为 {is_paused}")
         self._is_paused = is_paused
 
     def reset(self):
@@ -245,8 +249,9 @@ if __name__ == "__main__":
             [0.999675, 0.018617, 0.0174206, -0.421934],
             [0, 0, 0, 1]
         ]),
-        path="/home/shiroki/radar_data/16_4_33_left.avi"
+        path="/home/chenx/Source/radar_py/resources/1.mp4"
     ))
+    rrm.start()
     getter = rrm.get_latest_frame_getter()
     cv2.namedWindow("record_play")
     while True:
