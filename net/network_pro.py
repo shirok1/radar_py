@@ -123,8 +123,8 @@ class Predictor(object):
         if self.img_show and res.shape != 0:
             self.net_show(res)
         res = armor_filter(res)
-        DataRecorder.push(*data_cast[DataTypeEnum.NetworkOutputNp], res)
-        DataRecorder.push(*data_cast[DataTypeEnum.NetworkOutputTyped], res)
+        DataRecorder.push(data_cast[DataTypeEnum.NetworkOutputNp](res))
+        DataRecorder.push(data_cast[DataTypeEnum.NetworkOutputTyped](res))
         return res
 
     # 第二层网络的推理
