@@ -131,8 +131,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
     def __ui_init(self):
         self.__event_connect()
         frame = np.zeros((162, 716, 3)).astype(np.uint8)
-        self.set_image(frame, "left_demo")
-        self.set_image(frame, "right_demo")
         del frame
         self.board_textBrowser = {}
         self.pnp_textBrowser = {}
@@ -429,7 +427,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
         """
         if frame is None:
             return False
-        if position not in ["main_demo", "map", "far_demo", "blood", "hero_demo", "left_demo", "right_demo"]:
+        if position not in ["main_demo", "map", "far_demo", "blood", "hero_demo"]:
             import inspect
             logger.error(f"使用了错误的 position \"{position}\"，检查 {inspect.stack()[1]}")
             return False
