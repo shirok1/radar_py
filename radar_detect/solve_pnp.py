@@ -1,5 +1,5 @@
 """
-预警类
+通过 PNP 解算确定相机——世界位姿
 created by 黄继凡 2021/1
 最新修改 by 李龙 2022/5/3
 """
@@ -21,14 +21,15 @@ class SolvePnp(CameraLocation):
     count = 0  # 计数，依次确定个点图像坐标
 
     def __init__(self, text_api):
+        # 用全零向量初始化 rvec 和 tvec
         super(SolvePnp, self).__init__(
             np.zeros((3, 1), dtype=np.float64),
             np.zeros((3, 1), dtype=np.float64)
         )
-        self.debug = DEBUG
-        self._api = text_api
-        self.sp_state = False
-        self.side_text = ""
+        self.debug = DEBUG  # 当前是否是调试模式，影响使用的点集、标定结果文件名
+        self._api = text_api  # 向主窗口输出信息的接口，参数分别为等级、（信息在主窗口里的）位置、内容
+        self.sp_state = False  # 是否已经进行了所有点的标注，并至少进行了一次 PNP 解算
+        self.side_text = ""  # 使用的是哪只相机，需要删除
 
     def load_from_config(self, cam_config: CameraConfig):
         self.rvec = cam_config.rotate_vec
@@ -146,15 +147,21 @@ class SolvePnp(CameraLocation):
                                                       reprojectionError=3,
                                                       confidence=0.99,
                                                       flags=cv2.SOLVEPNP_EPNP)
+                rvec: np.ndarray
+                tvec: np.ndarray
             except Exception as e:
                 logger.error(e)
                 self.sp_state = False
                 self._update_info()
                 return False
+            if np.isnan(rvec).any() or np.isnan(rvec).any():  # TODO: 添加一个开关
+                logger.warning(f"PNP 解算结果包含 NaN, 已放弃本次解算结果, rvec: {rvec.T}, tvec: {tvec.T}")
+                self.sp_state = False
+                self._update_info()
+                return False
             self.rvec = rvec
             self.tvec = tvec
-            logger.info(f"rvec: {rvec}")
-            logger.info(f"tvec: {tvec}")
+            logger.info(f"PNP 解算成功, rvec: {rvec.T}, tvec: {tvec.T}")
             self.sp_state = True
             self._update_info()
             return True
