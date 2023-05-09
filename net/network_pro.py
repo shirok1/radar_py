@@ -105,7 +105,7 @@ class Predictor(object):
         img /= 255.0
 
         # 把图片输入网络进行推理
-        net1_output = self._net1.infer(img, 1)[0]
+        net1_output = self._net1.infer(img)[0]
         res = self.net1_process_sjtu(net1_output)
 
         if res.shape[0] != 0:
@@ -142,7 +142,7 @@ class Predictor(object):
         img = np.ascontiguousarray(img)
         img = img.astype(np.float32)
         img /= 255.0
-        net_output = self._net2.infer(img, 3)
+        net_output = self._net2.infer(img)
         # 后处理
         res = self.net2_process(net_output[0], net_output[1], net_output[2])
         return res
