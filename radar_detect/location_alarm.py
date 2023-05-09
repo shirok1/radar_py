@@ -10,7 +10,8 @@ import numpy as np
 import time
 from radar_detect.common import is_inside_polygon
 import ui.map.draw_map as draw_map  # 引入draw_map模块，使用其中的CompeteMap类
-from config import color2enemy, enemy_color, cam_config, real_size, region, test_region, choose
+from config import my_color, my_viewing_position, cam_config, real_size, region, test_region, choose
+from config_type import TeamColor
 from radar_detect.location_Delaunay import location_Delaunay
 
 
@@ -38,25 +39,21 @@ class Alarm(draw_map.CompeteMap):
     state_name = ['雷达点云定位', '德劳内三角定位', 'kd_tree定位', '禁用定位']
     state = [3, 3]
 
-    def __init__(self, api, touch_api, enemy, state_: list, _save_data: bool, debug=False):
+    def __init__(self, api, touch_api, state_: list, debug=False):
         """
         :param api:主程序显示api，传入画图程序进行调用（不跨线程使用,特别是Qt）
         :param touch_api:log api
-        :param enemy:敌方编号
         :param debug:debug模式
         """
         self._debug = debug
-        self._save_data = _save_data
-        # 敌人颜色
-        self._enemy = enemy
         # 显示api
         self._touch_api = touch_api
         self.state = state_
         if debug:
-            super(Alarm, self).__init__(test_region, real_size, enemy, api)
+            super(Alarm, self).__init__(test_region, real_size, api)
             self._region = test_region
         else:
-            super(Alarm, self).__init__(region, real_size, enemy, api)
+            super(Alarm, self).__init__(region, real_size, api)
             self._region = region
 
         self.reset_thre = 300
@@ -82,12 +79,13 @@ class Alarm(draw_map.CompeteMap):
         self._camera_position = [None, None]
         self._T = [None, None]
         # 根据敌方颜色确定识别颜色
-        if int(enemy_color) == 0:
-            choose_left = "cam_left_red"
-            choose_right = "cam_right_red"
-        else:
-            choose_left = "cam_left_blue"
-            choose_right = "cam_right_blue"
+        match my_viewing_position.enemy:
+            case TeamColor.RED:
+                choose_left = "cam_left_red"
+                choose_right = "cam_right_red"
+            case TeamColor.BLUE:
+                choose_left = "cam_left_blue"
+                choose_right = "cam_right_blue"
 
         # 左右相机的德劳内三角定位
         self._loc_D = [location_Delaunay(
@@ -115,13 +113,6 @@ class Alarm(draw_map.CompeteMap):
         # 初始化最后一次位置
         self._location_cache = self._location.copy()
         self._last_location = self._location.copy()
-
-        if self._save_data:
-            self._f = open("resources/location_data.dat", "wb")
-
-    def close_data(self):
-        if self._save_data:
-            self._f.close()
 
     def push_T(self, rvec, tvec, camera_type):
         """
@@ -152,7 +143,7 @@ class Alarm(draw_map.CompeteMap):
         """
         for loc in self._region.keys():
             alarm_type, team, target, l_type = loc.split('_')
-            if color2enemy[team] == self._enemy:
+            if TeamColor.from_lower(team) != my_color:
                 targets = []
                 # 对所有装甲板和所有区域，检测装甲板是否在区域内
                 for armor in list(self._location.keys())[0:5]:
@@ -282,8 +273,6 @@ class Alarm(draw_map.CompeteMap):
         :param t_locations_right: 右相机检测到的装甲板位置信息（没有使用）
         :param rp_alarming: 反投影
         """
-        if self._save_data:
-            pickle.dump([t_locations_left, t_locations_right, rp_alarming], self._f)
         # init location
         for i in range(1, 6):
             self._location[str(i)][0:2] = [0, 0]

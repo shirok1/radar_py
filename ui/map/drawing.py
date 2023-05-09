@@ -8,12 +8,16 @@
 # version    ：python 3.8
 # Description：
 """
-import numpy as np
-import time
-import queue
-from typing import Dict
-import cv2 as cv
 import math
+import queue
+import time
+
+import cv2 as cv
+import numpy as np
+from loguru import logger
+
+from config import my_color
+from config_type import TeamColor
 
 
 class draw_message(object):
@@ -290,11 +294,10 @@ class drawing(object):
         Returns:
 
         """
-        from config import enemy_color, color2enemy
         for i in self.scene_region.keys():
             recor = self.scene_region[i]
             _, shape_type, team, location, height_type = i.split('_')
-            if color2enemy[team] != enemy_color:
+            if TeamColor.from_lower(team) != my_color.enemy:
                 continue
             else:
                 if i in rp_alarming.keys():

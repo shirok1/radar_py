@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 from loguru import logger
 
-from config import objPoints, objNames, DEBUG, cam_config, enemy2color, enemy_color
+from config import objPoints, objNames, DEBUG, cam_config, my_viewing_position
 from config_type import CameraConfig
 from radar_detect.location import CameraLocation
 
@@ -61,9 +61,9 @@ class SolvePnp(CameraLocation):
         :param side: 0:left 1:right
         """
         if side == 0:
-            side_text = f'cam_left_{enemy2color[enemy_color]}'
+            side_text = f'cam_left_{my_viewing_position.enemy.as_lower()}'
         else:
-            side_text = f'cam_right_{enemy2color[enemy_color]}'
+            side_text = f'cam_right_{my_viewing_position.enemy.as_lower()}'
         self.side_text = side_text
         self.count_max = len(objNames[int(self.debug)][side_text])
         self.names = objNames[int(self.debug)][side_text]

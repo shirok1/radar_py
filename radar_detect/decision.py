@@ -11,8 +11,10 @@
 import time
 
 import numpy as np
+
+from config import my_color
+from config_type import TeamColor
 from ui.map.drawing import draw_message
-from config import enemy_color
 
 
 class decision_tree(object):
@@ -35,10 +37,11 @@ class decision_tree(object):
         # _car_decision第二维：0-预警类型（0:normal 1:attack 2:run 3:tou 4:fly 1-攻击目标 2-云台 3-方位
         self._car_decision = np.zeros((6, 4)).astype(np.uint8)
         self._decision_time = np.zeros((6, 1))
-        if enemy_color:
-            self.start_x = 0
-        else:
-            self.start_x = 28.
+        match my_color:
+            case TeamColor.RED:
+                self.start_x = 0.
+            case TeamColor.BLUE:
+                self.start_x = 28.
         self._start_time = time.time()
         self._energy_time = time.time()
         self._guard_time = time.time()

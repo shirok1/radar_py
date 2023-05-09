@@ -5,10 +5,11 @@ created by 牟俊宇 2021/12
 """
 import cv2
 import numpy as np
-import time
+from loguru import logger
+
+from config import cam_config, region, real_size, my_color
+from config_type import TeamColor
 from radar_detect.common import is_inside_polygon
-from config import color2enemy, enemy_color, cam_config, \
-    DEBUG, test_region, region, real_size
 
 
 class Reproject(object):
@@ -26,17 +27,16 @@ class Reproject(object):
         self._K_O = cam_config[name]['K_0']
         self._C_O = cam_config[name]['C_0']
         self._y_offset = cam_config[name]["roi"][1]
-        if DEBUG:  # 若为debug模式
-            self._region = test_region
-        else:
-            self._region = region.copy()
-            for loc in list(self._region.keys()):
-                _, team, _, _ = loc.split('_')
-                if color2enemy[team] != enemy_color:
-                    self._region.pop(loc)
+        # if DEBUG:  # 若为debug模式
+        #     self._region = test_region
+        # else: else就是下面的self 和 for 循环语句
+        self._region = region.copy()
+        for loc in list(self._region.keys()):
+            _, team, _, _ = loc.split('_')
+            if TeamColor.from_lower(team) == my_color:
+                self._region.pop(loc)
         self._scene_region = {}  # 反投影位置图形
         self._name = name
-        self._enemy = enemy_color
         self._real_size = real_size  # 真实尺寸
         self._scene_init = False  # 初始化flag
         self.fly = False
@@ -60,7 +60,7 @@ class Reproject(object):
             cor = None
             height = None
             rtype, team, location, height_type = r.split('_')
-            if color2enemy[team] == self._enemy:  # 筛选出敌方的区域
+            if TeamColor.from_lower(team) != my_color:  # 筛选出敌方的区域
                 if rtype == 's' or rtype == 'a':  # 筛选需要进行反投影的区域
                     self._region_count[f'{location}'] = 0  # 初始化区域检测计数
                     self._time[f'{location}'] = 0  # 初始化时间间隔

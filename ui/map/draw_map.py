@@ -6,7 +6,8 @@ draw_map.py
 import cv2
 import numpy as np
 
-from config import MAP_PATH, map_size, enemy2color
+from config import MAP_PATH, map_size, my_color, my_viewing_position
+from config_type import TeamColor
 
 
 class CompeteMap(object):
@@ -20,14 +21,12 @@ class CompeteMap(object):
     _circle_size = 10
     _twinkle_times = 29  # 闪烁次数
 
-    def __init__(self, region, real_size, enemy, api):
+    def __init__(self, region, real_size, api):
         """
         :param region:预警区域
         :param real_size:真实赛场大小
-        :param enemy:敌方编号
         :param api:显示api f(img)
         """
-        self._enemy = enemy
         # map为原始地图(canvas),out_map在每次refresh时复制一份canvas副本并在其上绘制车辆位置及预警
         self._map = cv2.imread(MAP_PATH)
         self._map = cv2.resize(self._map, map_size)
@@ -38,14 +37,7 @@ class CompeteMap(object):
         # 闪烁画面，out_map前一步骤，因为out_map翻转过，而region里面（x,y）依照未翻转的坐标定义，若要根据region进行闪烁绘制，用未翻转地图更加方便
         self._out_map_twinkle = self._map.copy()
         # 画点以后画面
-        if self._enemy:
-            # enemy is blue,逆时针旋转90
-            self._out_map = cv2.rotate(
-                self._out_map_twinkle, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        else:
-            # enemy is red,顺时针旋转90
-            self._out_map = cv2.rotate(
-                self._out_map_twinkle, cv2.ROTATE_90_CLOCKWISE)
+        self._draw_base_map()
 
         self._twinkle_event = {}
 
@@ -55,16 +47,24 @@ class CompeteMap(object):
         """
         self._out_map_twinkle = self._map.copy()
 
+    def _draw_base_map(self):
+        match my_viewing_position:
+            case TeamColor.RED:
+                # enemy is blue,逆时针旋转90
+                self._out_map = cv2.rotate(
+                    self._out_map_twinkle, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            case TeamColor.BLUE:
+                # enemy is red,顺时针旋转90
+                self._out_map = cv2.rotate(
+                    self._out_map_twinkle, cv2.ROTATE_90_CLOCKWISE)
+
     def _update(self, location: dict, last_location: dict):
         """
         更新车辆位置
         :param last_location:车辆位置字典 索引为'1'-'5',内容为车辆位置数组(2,)
         :param location:车辆位置字典 索引为'1'-'5',内容为车辆位置数组(2,)
         """
-        if self._enemy:
-            self._out_map = cv2.rotate(self._out_map_twinkle, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        else:
-            self._out_map = cv2.rotate(self._out_map_twinkle, cv2.ROTATE_90_CLOCKWISE)
+        self._draw_base_map()
         _loc_map = [0, 0]
         for armor in location.keys():
             mode = 1
@@ -75,10 +75,11 @@ class CompeteMap(object):
                 ori_x = int(last_location[armor][0] / self._real_size[0] * map_size[0])
                 ori_y = int((self._real_size[1] - last_location[armor][1]) / self._real_size[1] * map_size[1])
             # 位置翻转
-            if self._enemy:
-                _loc_map = ori_y, map_size[0] - ori_x
-            else:
-                _loc_map = map_size[1] - ori_y, ori_x
+            match my_viewing_position:
+                case TeamColor.RED:
+                    _loc_map = ori_y, map_size[0] - ori_x
+                case TeamColor.BLUE:
+                    _loc_map = map_size[1] - ori_y, ori_x
             # 画定位点；armor为字符'1'-'5'
             self._draw_circle(_loc_map, int(armor), dtype=mode)
 
@@ -95,7 +96,7 @@ class CompeteMap(object):
         """
         for r in region.keys():
             alarm_type, team, _, _ = r.split('_')
-            if (alarm_type == 'm' or alarm_type == 'a') and team == enemy2color[self._enemy]:  # 预警类型判断，若为map或all类型
+            if (alarm_type == 'm' or alarm_type == 'a') and team == my_color.enemy.as_lower():  # 预警类型判断，若为map或all类型
                 # n点预警
                 f = lambda x: (int(x[0] * map_size[0] // self._real_size[0]),
                                int((self._real_size[1] - x[1]) * map_size[1] // self._real_size[1]))

@@ -3,7 +3,33 @@
 """
 
 from dataclasses import dataclass
+from enum import Enum
+
 import numpy as np
+
+
+class TeamColor(Enum):
+    """队伍颜色"""
+    RED = 0
+    BLUE = 1
+
+    def as_lower(self) -> str:
+        """返回小写的字符串"""
+        return self.name.lower()
+
+    @classmethod
+    def from_lower(cls, name: str):
+        """从小写的字符串返回枚举"""
+        return cls[name.upper()]
+
+    @property
+    def enemy(self) -> "TeamColor":
+        """返回敌方颜色"""
+        match self:
+            case TeamColor.RED:
+                return TeamColor.BLUE
+            case TeamColor.BLUE:
+                return TeamColor.RED
 
 
 class RdrReceive:

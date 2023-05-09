@@ -12,7 +12,25 @@ from config_type import HikCameraConfig, VideoConfig, CameraConfig, RdrConfig
 
 mongo_url = "mongodb://localhost:27017/"
 
-enemy_color = 0  # 0：敌方为红色；1：敌方为蓝色
+enemy_color = 1  # 0：对方是红色（我们是蓝色）；1：对方是蓝色（我们是红色）
+# 需要设计来应对集成这种红蓝雷达在同一边的场地
+my_color = TeamColor.RED
+my_viewing_position = TeamColor.RED  # 雷达站在谁的雷达基座上，在集成产业园的测试场地上需要设置为 TeamColor.RED，比赛时设置为 my_color 即可
+
+# 下面是复制用的样板
+# match my_color:
+#     case TeamColor.RED:
+#         # 我是红方
+#         pass
+#     case TeamColor.BLUE:
+#         # 我是蓝方
+#         pass
+
+
+serial_usable = False  # 串口可用状态
+# lidar_usable = True  # 激光雷达可用状态
+# locate_mode = 0  # 定位模式 0：激光雷达（深度图）, 1: 德劳内, 2: kd_tree, 3: 禁用
+
 USEABLE = {
     "serial": False,
     "Lidar": False,

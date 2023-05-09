@@ -17,7 +17,8 @@ from loguru import logger
 
 import config
 from abstraction.pipeline import ProcessPipeline
-from config import USEABLE, enemy_color, cam_config, enemy2color
+from config import USEABLE, cam_config, my_viewing_position, my_color
+from config_type import TeamColor
 from service.video_service import VideoReader
 from ui.mainwindow.generated_ui import Ui_MainWindow
 from radar_detect.Linar_rs import Radar
@@ -37,7 +38,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
         super(MainWindow, self).__init__()
         self._cameras = cameras
         self.setupUi(self)
-        self.hp_scene = HP_scene(enemy_color, lambda x: self.set_image(x, "blood"))
+        self.hp_scene = HP_scene(my_color.enemy.value, lambda x: self.set_image(x, "blood"))
         self.board_api = lambda x, y, z: self.set_board_text(x, y, z)
         self.pnp_api = lambda x, y, z: self.set_pnp_text(x, y, z)
         self.show_map = lambda x: self.set_image(x, "map")
@@ -99,8 +100,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
 
         self.decision_tree = decision_tree(self.text_api)
         self.repo_left = Reproject('cam_left', self.text_api)  # 左相机反投影
-        self.loc_alarm = Alarm(enemy=enemy_color, api=self.show_map, touch_api=self.text_api,
-                               state_=USEABLE['locate_state'], _save_data=True, debug=False)  # 绘图及信息管理类
+        self.loc_alarm = Alarm(api=self.show_map, touch_api=self.text_api, state_=USEABLE['locate_state'],
+                               debug=False)  # 绘图及信息管理类
         self.decision_tree = decision_tree(self.text_api)  # 决策树
         self.supply_detector = eco_forecast(self.text_api)  # 经济预测(判断敌方哪个加弹了)
 
@@ -109,7 +110,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
         self.total_time = self._record.total_time if self._record is not None else 0.0
 
         try:
-            self.sp.read(f'cam_left_{enemy2color[enemy_color]}')
+            self.sp.read(f'cam_left_{my_viewing_position.enemy.as_lower()}')
             self.repo_left.push_T(self.sp.rvec, self.sp.tvec)
             self.loc_alarm.push_T(self.sp.rvec, self.sp.tvec, 0)
         except Exception as e:
@@ -117,7 +118,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
             self.repo_left.push_T(cam_config["cam_left"]["rvec"], cam_config["cam_left"]["tvec"])
             self.loc_alarm.push_T(cam_config["cam_left"]["rvec"], cam_config["cam_left"]["tvec"], 0)
         try:
-            self.sp.read(f'cam_right_{enemy2color[enemy_color]}')
+            self.sp.read(f'cam_right_{my_viewing_position.enemy.as_lower()}')
             self.loc_alarm.push_T(self.sp.rvec, self.sp.tvec, 1)
         except Exception as e:
             print(f"[ERROR] {e}")
@@ -575,9 +576,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
     def _update_decision(self) -> None:
         self.supply_detector.eco_detect(self.__pic_left, self.loc_alarm.get_last_loc(),
                                         lambda x: self.set_image(x, "hero_demo"))
+        match my_color:
+            case TeamColor.RED:
+                our_blood = Port_operate.HP()[0:8]
+                enemy_blood = Port_operate.HP()[8:16]
+            case TeamColor.BLUE:
+                our_blood = Port_operate.HP()[8:16]
+                enemy_blood = Port_operate.HP()[0:8]
+        # noinspection PyUnboundLocalVariable
         self.decision_tree.update_serial(Port_operate.positions_us(),
-                                         Port_operate.HP()[8 * (1 - enemy_color):8 * (1 - enemy_color) + 8],
-                                         Port_operate.HP()[8 * enemy_color:8 * enemy_color + 8],
+                                         our_blood,
+                                         enemy_blood,
                                          Port_operate.get_state(),
                                          int(420 - time.time() + Port_operate.start_time),
                                          False)

@@ -11,10 +11,13 @@
 
 # 经济预测类
 import time
-from config import enemy_color
-import numpy as np
-from ui.map.drawing import draw_message
+
 import cv2 as cv
+import numpy as np
+
+from config import my_color
+from config_type import TeamColor
+from ui.map.drawing import draw_message
 
 
 class eco_forecast(object):
@@ -29,10 +32,11 @@ class eco_forecast(object):
         self._dis_weight = 0.6
         self._time_weight = 0.4
         self._fore_threshold = 5
-        if enemy_color:
-            self._start_dis = 0
-        else:
-            self._start_dis = 28.
+        match my_color:
+            case TeamColor.RED:
+                self.start_x = 0.
+            case TeamColor.BLUE:
+                self.start_x = 28.
         self._last_Dtime = time.time()
         self._detect_frequency = 5
 

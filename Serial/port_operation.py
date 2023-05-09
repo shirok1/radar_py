@@ -1,12 +1,13 @@
 """
 串口相关操作类
 """
-import numpy as np
 import time
-from .official import Game_data_define, official_Judge_Handler
-from config import enemy_color, BO
 
+import numpy as np
 
+from config import BO, my_color
+from config_type import TeamColor
+from official import official_Judge_Handler
 
 
 class Port_operate(object):
@@ -289,24 +290,24 @@ class Port_operate(object):
             else:
                 flag = True
             # 敌方判断
-            if enemy_color == 0:
-                # 敌方为红方
-                if flag:
-                    Port_operate.Map(Port_operate.Map_Transmit.r_id, np.float32(x), np.float32(y), ser)
-                    time.sleep(0.1)
-                    if Port_operate.Map_Transmit.r_id == 5:
-                        Port_operate.Map_Transmit.r_id = 1
-                    else:
-                        Port_operate.Map_Transmit.r_id += 1
-            if enemy_color == 1:
-                # 敌方为蓝方
-                if flag:
-                    Port_operate.Map(Port_operate.Map_Transmit.b_id, np.float32(x), np.float32(y), ser)
-                    time.sleep(0.1)
-                    if Port_operate.Map_Transmit.b_id == 105:
-                        Port_operate.Map_Transmit.b_id = 101
-                    else:
-                        Port_operate.Map_Transmit.b_id += 1
+            if flag:
+                match my_color:
+                    case TeamColor.BLUE:
+                        # 敌方为红方
+                        Port_operate.Map(Port_operate.Map_Transmit.r_id, np.float32(x), np.float32(y), ser)
+                        time.sleep(0.1)
+                        if Port_operate.Map_Transmit.r_id == 5:
+                            Port_operate.Map_Transmit.r_id = 1
+                        else:
+                            Port_operate.Map_Transmit.r_id += 1
+                    case TeamColor.RED:
+                        # 敌方为蓝方
+                        Port_operate.Map(Port_operate.Map_Transmit.b_id, np.float32(x), np.float32(y), ser)
+                        time.sleep(0.1)
+                        if Port_operate.Map_Transmit.b_id == 105:
+                            Port_operate.Map_Transmit.b_id = 101
+                        else:
+                            Port_operate.Map_Transmit.b_id += 1
         Port_operate.Map_Transmit.nID = (Port_operate.Map_Transmit.nID + 1) % 5
 
     @staticmethod
@@ -334,35 +335,36 @@ class Port_operate(object):
         cmd = Port_operate.decisions()[Port_operate.port_manager.nID]
         alarm_type, attack_target, cradle_head, direction = cmd.astype(int)
         # 敌方判断
-        if enemy_color == 0:
-            # 敌方为红方
-            my_id = 109
-            if Port_operate.port_manager.b_id == 107:
-                Port_operate.robo_alarm(Port_operate.port_manager.b_id, my_id, Port_operate.poi_num, 2, 3,
-                                        4, ser)
-                Port_operate.poi_num += 1
-                if Port_operate.poi_num == 11:
-                    Port_operate.poi_num = 1
-            else:
+        match my_color:
+            case TeamColor.BLUE:
+                # 敌方为红方
+                my_id = 109
+                if Port_operate.port_manager.b_id == 107:
+                    Port_operate.robo_alarm(Port_operate.port_manager.b_id, my_id, Port_operate.poi_num, 2, 3,
+                                            4, ser)
+                    Port_operate.poi_num += 1
+                    if Port_operate.poi_num == 11:
+                        Port_operate.poi_num = 1
+                else:
+                    Port_operate.robo_alarm(Port_operate.port_manager.b_id, my_id, alarm_type, attack_target, cradle_head,
+                                            direction, ser)
+                time.sleep(0.1)
+                if Port_operate.port_manager.b_id == 107:
+                    Port_operate.port_manager.b_id = 101
+                elif Port_operate.port_manager.b_id == 105:
+                    Port_operate.port_manager.b_id += 2
+                else:
+                    Port_operate.port_manager.b_id += 2
+            case TeamColor.RED:
+                # 敌方为蓝方
+                my_id = 9
                 Port_operate.robo_alarm(Port_operate.port_manager.b_id, my_id, alarm_type, attack_target, cradle_head,
                                         direction, ser)
-            time.sleep(0.1)
-            if Port_operate.port_manager.b_id == 107:
-                Port_operate.port_manager.b_id = 101
-            elif Port_operate.port_manager.b_id == 105:
-                Port_operate.port_manager.b_id += 2
-            else:
-                Port_operate.port_manager.b_id += 2
-        if enemy_color == 1:
-            # 敌方为蓝方
-            my_id = 9
-            Port_operate.robo_alarm(Port_operate.port_manager.b_id, my_id, alarm_type, attack_target, cradle_head,
-                                    direction, ser)
-            time.sleep(0.1)
-            if Port_operate.port_manager.r_id == 7:
-                Port_operate.port_manager.r_id = 1
-            elif Port_operate.port_manager.r_id == 5:
-                Port_operate.port_manager.r_id += 2
-            else:
-                Port_operate.port_manager.r_id += 1
+                time.sleep(0.1)
+                if Port_operate.port_manager.r_id == 7:
+                    Port_operate.port_manager.r_id = 1
+                elif Port_operate.port_manager.r_id == 5:
+                    Port_operate.port_manager.r_id += 2
+                else:
+                    Port_operate.port_manager.r_id += 1
         Port_operate.port_manager.nID = (Port_operate.port_manager.nID + 1) % 5

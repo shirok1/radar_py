@@ -13,8 +13,7 @@ from loguru import logger
 
 from record.data_recorder import DataRecorder
 from record.cast_helper import data_cast, DataTypeEnum
-from config import net1_engine, net2_engine, \
-    net1_cls, net2_cls_names, enemy_color
+from config import net1_engine, net2_engine, net1_cls, net2_cls_names
 from net.tensorrtx import YoLov5TRT
 from radar_detect.common import armor_filter
 
@@ -66,8 +65,7 @@ class Predictor(object):
         self.img_src = np.zeros(cam_config[name]["size"])  # 生成图片大小的零矩阵
         self.name = name  # 选择的相机是左还是右
         self.choose_type = 0  # 只选择检测cars类，不检测哨兵和基地
-        self.enemy_color = not enemy_color
-        self.lock = threading.Condition()   # 多线程操作
+        self.lock = threading.Condition()  # 多线程操作
 
         # 划分三层grid
         for i in self.net1_strides:
