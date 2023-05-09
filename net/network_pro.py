@@ -55,14 +55,17 @@ class Predictor(object):
     net2_anchors = [[4, 5], [8, 10], [13, 16], [23, 29], [43, 55], [73, 105], [146, 217], [231, 300], [335, 433]]
     net2_strides = [8, 16, 32]
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, img_size: tuple[int, int]):
         """
-        初始化函数
-        :param _name 
+        构造函数
+        :param name: 网络上游的相机名称，用于打印日志
+        :param img_size: 图片大小
         """
         self._net1 = YoLov5TRT(self.net1_trt_file)  # net1初始化
         self._net2 = YoLov5TRT(self.net2_trt_file)  # net2初始化
-        self.img_src = np.zeros(cam_config[name]["size"])  # 生成图片大小的零矩阵
+        logger.debug(f"为 {name} 构造了两层神经网络：{(self._net1, self._net2)}")
+        width, height = img_size
+        self.img_src = np.zeros((height, width, 3), dtype=np.uint8)  # 生成图片大小的零矩阵
         self.name = name  # 选择的相机是左还是右
         self.choose_type = 0  # 只选择检测cars类，不检测哨兵和基地
         self.lock = threading.Condition()  # 多线程操作
@@ -89,7 +92,7 @@ class Predictor(object):
         :param src 3072x2048
         """
         self.lock.acquire()
-        self.img_src = src.copy()
+        np.copyto(self.img_src, src, casting='no')
         self.lock.notify()
         self.lock.release()
         # 图像预处理
@@ -532,12 +535,12 @@ if __name__ == '__main__':
     import sys
 
     sys.path.append("..")  # 单独跑int的时候需要
-    cap = cv.VideoCapture("/home/hoshino/CLionProjects/hitsz_radar/resources/records/radar_data/19_13_36_left.avi")
+    cap = cv.VideoCapture("/home/shiroki/radar_data/16_4_33_left (trimmed).avi")
 
     count = 0
     t2 = time.time()
     t1 = time.time()
-    pre1 = Predictor('cam_left')
+    pre1 = Predictor('cam_left', (3072, 2048))
 
     while cap.isOpened():
         res, frame = cap.read()
