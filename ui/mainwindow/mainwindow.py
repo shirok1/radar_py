@@ -149,13 +149,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
         self.PlayStatus.setText("0:00/%d:%02d" % (self.total_time // 60, self.total_time % 60))
 
     # 事件绑定
+    # noinspection DuplicatedCode
     def __event_connect(self) -> None:
-        self.ChangeView.clicked.connect(self.ChangeView_on_clicked)
+        # 在 UI 禁用一些不再适用的老功能
+        self.ChangeView.setEnabled(False)
+        self.Record.setEnabled(False)
+        self.DisplayLidar.setEnabled(False)
+        self.UseNet.setEnabled(False)
+        # self.ChangeView.clicked.connect(self.ChangeView_on_clicked)
+        # self.Record.clicked.connect(self.record_on_clicked)
+        # self.DisplayLidar.toggled.connect(self.showpc_on_clicked)
+
         self.epnp_begin.clicked.connect(self.epnp_calculate)
         self.epnp_back.clicked.connect(self.epnp_back_on_clicked)
         self.epnp_clear.clicked.connect(self.epnp_clear_on_clicked)
         self.epnp_next.clicked.connect(self.epnp_next_on_clicked)
-        # self.Record.clicked.connect(self.record_on_clicked)
         # TODO: 升级雷达显示
         # self.ShowLidar.clicked.connect(self.showpc_on_clicked)
         # self.ShutDown.clicked.connect(self.CloseProgram_on_clicked)
@@ -171,7 +179,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
         self.condition.setFocusPolicy(Qt.ClickFocus)
         self.far_demo.setFocusPolicy(Qt.ClickFocus)
         self.tabWidget.currentChanged.connect(self.epnp_on_clicked)
-        self.DisplayLidar.toggled.connect(self.showpc_on_clicked)
         if self._record is not None:
             logger.debug("正在播放录像")
             self.ResetSpeed.clicked.connect(self.reset_speed_on_clicked)
