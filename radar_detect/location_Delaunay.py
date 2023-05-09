@@ -10,6 +10,8 @@
 """
 import cv2 as cv
 import numpy as np
+from loguru import logger
+
 from config import Delaunary_points, cam_config
 
 
@@ -58,7 +60,7 @@ class location_Delaunay(object):
             for i in self.rect_points:
                 self.Dly.insert(tuple(i.tolist()))
         except Exception as e:
-            print(f"[ERROR] {e}")
+            logger.error(e)
         self.init_ok = True
 
     def _get_region(self):
@@ -89,7 +91,7 @@ class location_Delaunay(object):
             for i in self.rect_points:
                 self.Dly.insert(tuple(i.tolist()))
         except Exception as e:
-            print(f"[ERROR] {e}")
+            logger.error(e)
         # triangle = self.Dly.getTriangleList()
         self.init_ok = True
 
@@ -109,7 +111,7 @@ class location_Delaunay(object):
                     w_point = self._cal_pos_vertex(res)
                 except Exception as e:
                     w_point = np.ndarray((3, 1), dtype=np.float64) * np.nan
-                    print(f"[ERROR] {e}")
+                    logger.error(e)
             elif detect_type == 1:
                 try:
                     # 截去输入的第一维cls
@@ -145,7 +147,7 @@ class location_Delaunay(object):
                         w_point = self._cal_pos_vertex(np.ndarray(self.cam_points[res[2]]))
                 except Exception as e:
                     w_point = np.ndarray((3, 1), dtype=np.float64) * np.nan
-                    print(f"[ERROR] {e}")
+                    logger.error(e)
             else:
                 w_point = np.ndarray((3, 1), dtype=np.float64) * np.nan
             if w_point.reshape(-1).shape[0] == 0:

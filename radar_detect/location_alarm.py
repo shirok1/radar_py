@@ -4,10 +4,12 @@ created by 黄继凡 2021/12
 最新修改 by 黄继凡 2022/7/10
 """
 import pickle
+import time
 
 import cv2 as cv
 import numpy as np
-import time
+from loguru import logger
+
 from radar_detect.common import is_inside_polygon
 import ui.map.draw_map as draw_map  # 引入draw_map模块，使用其中的CompeteMap类
 from config import my_color, my_viewing_position, cam_config, real_size, region, test_region, choose
@@ -293,7 +295,7 @@ class Alarm(draw_map.CompeteMap):
         try:
             left_location[choose] = right_location[choose]
         except Exception as e:
-            print(choose)
+            logger.error(choose)
         T = time.time()
         for i in range(1, 6):
             self._location[str(i)][0:3] = left_location[i - 1].tolist()
@@ -427,7 +429,7 @@ class Alarm(draw_map.CompeteMap):
             B = np.concatenate(
                 [np.array(C).flatten(), np.ones(1)], axis=0)
             l1[1:] = (self._T[0] @ B)[:3] / 1000
-            print(l1)
+            logger.info(l1)
         else:
             # 德劳内（后两种定位均在其中）
             l1 = armor.reshape(-1)
@@ -437,7 +439,7 @@ class Alarm(draw_map.CompeteMap):
             self._twinkle(self._region)
             self._show()
         except Exception as e:
-            print(e)
+            logger.error(e)
 
     def get_draw(self, camera_type):
         """

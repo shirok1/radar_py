@@ -212,7 +212,7 @@ class Reproject(object):
                         # 检测到三帧，认为有敌人
                         if self._region_count[f'{location}'] >= self._frame:
                             self._filter_alarming[r] = self.rp_alarming[r].copy()
-                            print(f"[ERROR] 反投影{location}", f"在{location}处有敌人！！！")
+                            logger.warning(f"反投影在「{location}」发现敌人！！！")
                             self._region_count[f'{location}'] = 0
                         self._time[f'{location}'] = 0
 

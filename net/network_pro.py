@@ -437,8 +437,8 @@ class Predictor(object):
                 count += 1
                 if count == 9:
                     break
-            except:
-                print("error!")
+            except cv.error as e:
+                logger.error(f"Jigsaw error: {e}")
         return jig_picture
 
     def net2_output_process(self, net2_input, det_points, shape):
