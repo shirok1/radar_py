@@ -111,9 +111,13 @@ class CompeteMap(object):
         画定位点
         """
         img = self._out_map
-        color = (255 * self._enemy, 0, 255 * (1 - self._enemy))  # 解算颜色
-        last_color = (127 * self._enemy, 0, 127 * (1 - self._enemy))  # 解算颜色
-        armor = armor - 5 * (armor > 5)  # 将编号统一到1-5
+        if armor > 5:
+            color = (0, 0, 255)
+            last_color = (0, 0, 127)
+            armor -= 5
+        else:
+            color = (255, 0, 0)
+            last_color = (127, 0, 0)
         if dtype:
             cv2.circle(img, tuple(location), self._circle_size, color, -1)  # 内部填充
         else:

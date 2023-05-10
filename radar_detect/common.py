@@ -108,7 +108,7 @@ def armor_filter(armors: np.ndarray):
     """
 
     # 直接取最高置信度
-    ids = [1, 2, 3, 4, 5]
+    ids = range(1, 11)
     if armors.shape[0] != 0:
         results = []
         for i in ids:

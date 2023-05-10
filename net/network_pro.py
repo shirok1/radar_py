@@ -361,8 +361,12 @@ class Predictor(object):
             xc = output[i, :]
             cls_id = np.argmax(xc[15:15 + 9])  # 选择置信度最高的 class
             col_id = np.argmax(xc[24:])  # 选择置信度最高的 color
-            if col_id != self.enemy_color or cls_id not in range(1, 6):
+            # 仅保留 class 在 1~5 的情况
+            if cls_id not in range(1, 6):
                 continue
+            # 因为只输出 class 一个量，所以通过 +5 来区分红色
+            if col_id == 1:
+                cls_id += 5
             obj_conf = float(xc[4])  # 置信度
             # 计算检测框中心点在图片中的坐标
             centerX = int(

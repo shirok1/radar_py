@@ -105,13 +105,13 @@ class Alarm(draw_map.CompeteMap):
             np.sum(x, axis=1), np.zeros(x.shape[0]))
 
         start_time = time.time()
-        for i in range(1, 6):  # 初始化位置为全零
-            self._location[str(i)] = [0, 0, 0, 0]  # x，y，z, t
+        for i in range(1, 11):  # 初始化位置为全零
+            self._location[str(i)] = [0., 0., 0., 0.]  # x，y，z, t
             self._current_time[str(i)] = start_time
             self._confidence[i] = 0
 
         # 初始化定位信息
-        self._locations = [np.zeros((5, 3)), np.zeros((5, 3))]
+        self._locations = [np.zeros((10, 3)), np.zeros((10, 3))]
         # 初始化最后一次位置
         self._location_cache = self._location.copy()
         self._last_location = self._location.copy()
@@ -206,7 +206,8 @@ class Alarm(draw_map.CompeteMap):
         """
         position = self._T[camera_type][:, 3].copy().reshape(-1)
         t = time.time()
-        for i in range(1, 6):
+        # 1~5 蓝, 6~10 红
+        for i in range(1, 11):
             # z坐标大，则需警惕误识别
             if self._location[str(i)][2] >= 1.2 and (t - self._last_location[str(i)][3]) < 1:
                 # 相似三角形 投影到原z坐标对应平面
@@ -237,7 +238,7 @@ class Alarm(draw_map.CompeteMap):
         # z轴突变调整
         if self._z_a:
             self._adjust_z(0)
-        for i in range(1, 6):
+        for i in range(1, 11):
             # 置信度达到阈值
             if self._confidence[i] >= self.con_thre and self._location[str(i)][0] > 0:
                 if self._last_location[str(i)][0] > 0:
@@ -276,7 +277,7 @@ class Alarm(draw_map.CompeteMap):
         :param rp_alarming: 反投影
         """
         # init location
-        for i in range(1, 6):
+        for i in range(1, 11):
             self._location[str(i)][0:2] = [0, 0]
         # 更新左右相机检测的定位信息
         self._update_position(t_locations_left, 0, self.state[0], rp_alarming)
@@ -297,7 +298,9 @@ class Alarm(draw_map.CompeteMap):
         except Exception as e:
             logger.error(choose)
         T = time.time()
-        for i in range(1, 6):
+        for i in range(1, 11):
+            # if sum(left_location[i - 1]) != 0:
+            #     logger.info(f"id: {i}, location: {left_location[i - 1]}")
             self._location[str(i)][0:3] = left_location[i - 1].tolist()
             # 当前未检测到的对应装甲板
             if self._location[str(i)][0:2] != [0, 0]:
@@ -335,7 +338,7 @@ class Alarm(draw_map.CompeteMap):
         if isinstance(locations, np.ndarray):
             pred_loc = []
             locations[1:3] = np.around(locations[1:3])
-            for armor in range(1, 6):
+            for armor in range(1, 11):
                 # 检测到装甲板
                 if (locations[:, 0] == armor).any():
                     # 使用雷达点云定位
