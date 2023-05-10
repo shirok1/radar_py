@@ -319,6 +319,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
             self.scene.clear()
             self.scene.addItem(self.item)
             self.pnp_demo.setScene(self.scene)
+            self.pnp_demo.fitInView(self.scene.itemsBoundingRect(), Qt.KeepAspectRatio)
 
             self.sp.sel_cam(self.view_change)
         else:
