@@ -213,33 +213,35 @@ MAP_PATH = resource_prefix + "map.jpg"
 BAG_FIRE = resource_prefix + "2022_06_15_10_11_01.dat"
 
 # 小地图设定大小
-map_size = (716, 384)
-real_size = (28., 15.)
+map_size = (716, 384)  # 按像素尺寸
+real_size = (28., 15.)  # 现实尺寸（m）
 
+# 参加反投影预警区域
+# 被反投影后的画布坐标的点可以通过 Reproject::get_scene_region 获取
 region = \
     {
         'a_red_环形高地1_a': [real_points[27], real_points[28], real_points[25], real_points[26]],
         'a_red_环形高地2_a': [real_points[31], real_points[27], real_points[26], real_points[32]],
         'a_red_我方前哨站_d': [real_points[15], real_points[29], real_points[30], real_points[19], real_points[17],
-                          real_points[51]],
+                               real_points[51]],
         'a_red_敌方前哨站_d': [real_points[33], real_points[8], real_points[2], real_points[1], real_points[0]],
         'a_red_飞坡_d': [real_points[0], real_points[66], real_points[67], real_points[75]],
-        'a_red_我方3号高地_a': [real_points[59], real_points[60], real_points[35], real_points[64], real_points[63]],
-        'a_red_敌方3号高地_a': [real_points[44], real_points[70], real_points[12], real_points[54], real_points[68]],
+        # 'a_red_我方3号高地_a': [real_points[59], real_points[60], real_points[35], real_points[64], real_points[63]],
+        # 'a_red_敌方3号高地_a': [real_points[44], real_points[70], real_points[12], real_points[54], real_points[68]],
         'a_red_前哨站我方盲道_d': [real_points[30], real_points[25], real_points[58], real_points[21], real_points[19]],
-        'a_red_3号高地下我方盲道及公路区_a': [real_points[26], real_points[60], real_points[35], real_points[65]],
+        # 'a_red_3号高地下我方盲道及公路区_a': [real_points[26], real_points[60], real_points[35], real_points[65]],
 
         'a_blue_环形高地1_a': [real_points[9], real_points[10], real_points[11], real_points[7]],
         'a_blue_环形高地2_a': [real_points[10], real_points[11], real_points[13], real_points[14]],
         'a_blue_我方前哨站_d': [real_points[33], real_points[8], real_points[43], real_points[2], real_points[0],
-                           real_points[71]],
+                                real_points[71]],
         'a_blue_敌方前哨站_d': [real_points[15], real_points[30], real_points[19], real_points[18], real_points[17],
-                           real_points[51]],
+                                real_points[51]],
         'a_blue_飞坡_d': [real_points[55], real_points[17], real_points[78], real_points[56]],
-        'a_blue_我方3号高地_a': [real_points[44], real_points[70], real_points[12], real_points[54], real_points[68]],
-        'a_blue_敌方3号高地_a': [real_points[59], real_points[60], real_points[35], real_points[64], real_points[63]],
+        # 'a_blue_我方3号高地_a': [real_points[44], real_points[70], real_points[12], real_points[54], real_points[68]],
+        # 'a_blue_敌方3号高地_a': [real_points[59], real_points[60], real_points[35], real_points[64], real_points[63]],
         'a_blue_前哨站我方盲道_d': [real_points[43], real_points[7], real_points[4], real_points[76], real_points[2]],
-        'a_blue_3号高地下我方盲道及公路区_a': [real_points[11], real_points[53], real_points[12], real_points[45]],
+        # 'a_blue_3号高地下我方盲道及公路区_a': [real_points[11], real_points[53], real_points[12], real_points[45]],
     }
 
 test_region = \
@@ -251,7 +253,8 @@ test_region = \
 PC_STORE_DIR = ""
 LIDAR_TOPIC_NAME = "/livox/lidar"
 
-# 0为正式场上使用的points 1为debug用
+# 0 为正式场上使用的 points 1 为 debug 用
+# 用于 EPNP 标定，提示用，从 realpoints 中取点
 objNames = [
     {
         "cam_left_red": ['飞坡点(右)', '风车狙击点角(左)', '烧饼左', 'R2右', '环形高地银矿左角（敌方）',
@@ -275,7 +278,7 @@ objNames = [
     }
 ]
 
-# 德劳内三角定位选取定位点
+# 德劳内三角定位选取定位点，是 realpoints 中的索引
 choose = {"cam_left_red": [37, 65, 33, 66, 73, 72, 32, 28,
                            27, 29, 26, 30, 31, 15, 14, 41,
                            42, 40, 39, 9, 10, 11, 8, 12,
@@ -296,7 +299,8 @@ choose = {"cam_left_red": [37, 65, 33, 66, 73, 72, 32, 28,
                              36, 37, 61, 39, 40, 41, 42]
           }
 
-# 0为正式场上使用的points 1为debug用
+# 0为正式场上使用的 points, 1 为 debug 用
+# 用于 EPNP 标定，提示用，从 realpoints 中取点, 是 realpoints 中的索引
 objPoints = [
     {
         "cam_left_red": np.array([real_points[0],
