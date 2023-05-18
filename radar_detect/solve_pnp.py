@@ -149,8 +149,8 @@ class SolvePnp(CameraLocation):
                                                       flags=cv2.SOLVEPNP_EPNP)
                 rvec: np.ndarray
                 tvec: np.ndarray
-            except Exception as e:
-                logger.error(e)
+            except Exception:
+                logger.exception("PNP 解算出错")
                 self.sp_state = False
                 self._update_info()
                 return False

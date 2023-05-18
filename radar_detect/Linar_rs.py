@@ -219,7 +219,7 @@ class Radar(object):
                         Radar.__record_list.clear()
                         print("[INFO] record finished")
                     except:  # 当出现磁盘未挂载等情况，导致文件夹都无法创建
-                        print("[ERROR] The point cloud save dir even doesn't exist on this computer!")
+                        logger.exception("The point cloud save dir even doesn't exist on this computer!")
                 Radar.__record_times -= 1
             # update every class object's queue
             for q in Radar.__queue:
@@ -289,8 +289,8 @@ class Radar(object):
                     dist = np.linalg.norm(pc, axis=1)
                     pc = pc[dist > 0.4]  # 雷达近距离滤除
                     self.__queue[self._no].push_back_pc(pc)
-            except Exception as e:
-                print(e)
+            except Exception:
+                logger.exception("预载入雷达点云失败")
 
     def __del__(self):
         Radar.stop()

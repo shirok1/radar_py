@@ -440,8 +440,8 @@ class Alarm(draw_map.CompeteMap):
             self._update({'1': l1[1:3]}, {'1': l1[1:3]})
             self._twinkle(self._region)
             self._show()
-        except Exception as e:
-            logger.error(e)
+        except Exception:
+            logger.exception("pc_location 出错")
 
     def get_draw(self, camera_type):
         """

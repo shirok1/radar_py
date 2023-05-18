@@ -223,8 +223,8 @@ class Camera_HK:
             ret = self.cam.MV_CC_DestroyHandle()
             if ret != 0:
                 logger.error("destroy handle fail! ret[0x%x]" % ret)
-        except Exception as e:
-            logger.error(e)
+        except Exception:
+            logger.exception("关闭相机时出现错误")
         self.init_ok = False
 
     def __del__(self):

@@ -109,19 +109,25 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
         self.is_slider_held = False
         self.total_time = self._record.total_time if self._record is not None else 0.0
 
+        # 从 resources/cam_data/cam_{left/right}_{blue/red}.{rvec/tvec} 中读取相机外参
         try:
-            self.sp.read(f'cam_left_{my_viewing_position.enemy.as_lower()}')
+            vec_prefix = f"cam_left_{my_viewing_position.enemy.as_lower()}"
+            self.sp.read(vec_prefix)
             self.repo_left.push_T(self.sp.rvec, self.sp.tvec)
             self.loc_alarm.push_T(self.sp.rvec, self.sp.tvec, 0)
-        except Exception as e:
-            print(f"[ERROR] {e}")
+            logger.info(f"读取左相机上次标定结果 {vec_prefix} 成功：{self.sp.as_dict()}")
+            logger.warning("是否需要重新标定相机？")
+        except Exception:
+            logger.exception(f"读取左相机外参失败")
             self.repo_left.push_T(cam_config["cam_left"]["rvec"], cam_config["cam_left"]["tvec"])
             self.loc_alarm.push_T(cam_config["cam_left"]["rvec"], cam_config["cam_left"]["tvec"], 0)
+            logger.error(f"使用 config 中的左相机外参：{self.sp.as_dict()}")
+            logger.error(f"一定要重新标定相机！")
         try:
             self.sp.read(f'cam_right_{my_viewing_position.enemy.as_lower()}')
             self.loc_alarm.push_T(self.sp.rvec, self.sp.tvec, 1)
-        except Exception as e:
-            print(f"[ERROR] {e}")
+        except Exception:
+            logger.exception(f"读取右相机外参失败")
             self.loc_alarm.push_T(cam_config["cam_right"]["rvec"], cam_config["cam_right"]["tvec"], 1)
 
         self.draw_module.info_update_reproject(self.repo_left.get_scene_region())

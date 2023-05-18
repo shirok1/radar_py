@@ -59,8 +59,8 @@ class location_Delaunay(object):
                 self.Dly.insert(tuple(i.tolist()))
             for i in self.rect_points:
                 self.Dly.insert(tuple(i.tolist()))
-        except Exception as e:
-            logger.error(e)
+        except Exception:
+            logger.exception("构造时向 cv.Subdiv2D 实例插入投影点失败")
         self.init_ok = True
 
     def _get_region(self):
@@ -90,8 +90,8 @@ class location_Delaunay(object):
                 self.Dly.insert(tuple(i.tolist()))
             for i in self.rect_points:
                 self.Dly.insert(tuple(i.tolist()))
-        except Exception as e:
-            logger.error(e)
+        except Exception:
+            logger.exception("接受外参更新时向 cv.Subdiv2D 实例插入投影点失败")
         # triangle = self.Dly.getTriangleList()
         self.init_ok = True
 
@@ -109,9 +109,9 @@ class location_Delaunay(object):
                 try:
                     res = self.Dly.findNearest(tuple(l[1:3]))[1]
                     w_point = self._cal_pos_vertex(res)
-                except Exception as e:
+                except Exception:
                     w_point = np.ndarray((3, 1), dtype=np.float64) * np.nan
-                    logger.error(e)
+                    logger.exception("cv.Subdiv2D 实例查找最近点失败 detect_type = 2")
             elif detect_type == 1:
                 try:
                     # 截去输入的第一维cls
@@ -145,9 +145,9 @@ class location_Delaunay(object):
                     if value == cv.SUBDIV2D_PTLOC_VERTEX:
                         # 在三角形顶点
                         w_point = self._cal_pos_vertex(np.ndarray(self.cam_points[res[2]]))
-                except Exception as e:
+                except Exception:
                     w_point = np.ndarray((3, 1), dtype=np.float64) * np.nan
-                    logger.error(e)
+                    logger.exception("cv.Subdiv2D 实例查找最近点失败 detect_type = 1")
             else:
                 w_point = np.ndarray((3, 1), dtype=np.float64) * np.nan
             if w_point.reshape(-1).shape[0] == 0:
