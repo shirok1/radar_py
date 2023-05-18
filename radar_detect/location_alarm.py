@@ -10,10 +10,10 @@ import cv2 as cv
 import numpy as np
 from loguru import logger
 
-from radar_detect.common import is_inside_polygon
 import ui.map.draw_map as draw_map  # 引入draw_map模块，使用其中的CompeteMap类
 from config import my_color, my_viewing_position, cam_config, real_size, region, test_region, choose
 from config_type import TeamColor
+from radar_detect.common import is_inside_polygon, possible_cls_all_sides
 from radar_detect.location_Delaunay import location_Delaunay
 
 
@@ -61,15 +61,14 @@ class Alarm(draw_map.CompeteMap):
         self.reset_thre = 300
         self.reset_count = 0
 
+        # 下面四个字典的键为 '1'-'5', '7', '101'-'105', '107', 见 radar_detect.common.possible_cls_all_sides
         # current_time 车辆出现时间字典，键为字符'1'-'5'，值为车辆出现的时间点
         self._current_time = {}
-
-        # 下面两个字典的value应该是数组[x, y, z, time]
-        # location 车辆位置字典，键为字符'1'-'5'，值为车辆的位置数组，包含车辆坐标及出现时间间隔:[x, y, z, time]
+        # location 车辆位置字典, 值为车辆的位置数组, 包含车辆坐标及出现时间间隔: [x, y, z, time]
         self._location = {}
-        # location 车辆最后一次位置字典，键为字符'1'-'5'，值为车辆的位置数组，包含车辆坐标及出现时间间隔:[x, y, z, time]
+        # location 车辆最后一次位置字典, 值为车辆的位置数组, 包含车辆坐标及出现时间间隔: [x, y, z, time]
         self._last_location = {}
-        # confidence 车辆置信度字典，键为字符'1'-'5'，值为车辆的置信度
+        # confidence 车辆置信度字典, 值为车辆的置信度
         self._confidence = {}
 
         # 一阶低通滤波
@@ -105,13 +104,13 @@ class Alarm(draw_map.CompeteMap):
             np.sum(x, axis=1), np.zeros(x.shape[0]))
 
         start_time = time.time()
-        for i in range(1, 11):  # 初始化位置为全零
+        for i in possible_cls_all_sides:  # 初始化位置为全零
             self._location[str(i)] = [0., 0., 0., 0.]  # x，y，z, t
             self._current_time[str(i)] = start_time
             self._confidence[i] = 0
 
         # 初始化定位信息
-        self._locations = [np.zeros((10, 3)), np.zeros((10, 3))]
+        self._locations = [np.zeros((200, 3)), np.zeros((200, 3))]
         # 初始化最后一次位置
         self._location_cache = self._location.copy()
         self._last_location = self._location.copy()
@@ -207,7 +206,7 @@ class Alarm(draw_map.CompeteMap):
         position = self._T[camera_type][:, 3].copy().reshape(-1)
         t = time.time()
         # 1~5 蓝, 6~10 红
-        for i in range(1, 11):
+        for i in possible_cls_all_sides:
             # z坐标大，则需警惕误识别
             if self._location[str(i)][2] >= 1.2 and (t - self._last_location[str(i)][3]) < 1:
                 # 相似三角形 投影到原z坐标对应平面
@@ -238,7 +237,7 @@ class Alarm(draw_map.CompeteMap):
         # z轴突变调整
         if self._z_a:
             self._adjust_z(0)
-        for i in range(1, 11):
+        for i in possible_cls_all_sides:
             # 置信度达到阈值
             if self._confidence[i] >= self.con_thre and self._location[str(i)][0] > 0:
                 if self._last_location[str(i)][0] > 0:
@@ -277,7 +276,7 @@ class Alarm(draw_map.CompeteMap):
         :param rp_alarming: 反投影
         """
         # init location
-        for i in range(1, 11):
+        for i in possible_cls_all_sides:
             self._location[str(i)][0:2] = [0, 0]
         # 更新左右相机检测的定位信息
         self._update_position(t_locations_left, 0, self.state[0], rp_alarming)
@@ -298,7 +297,7 @@ class Alarm(draw_map.CompeteMap):
         except Exception as e:
             logger.error(choose)
         T = time.time()
-        for i in range(1, 11):
+        for i in possible_cls_all_sides:
             # if sum(left_location[i - 1]) != 0:
             #     logger.info(f"id: {i}, location: {left_location[i - 1]}")
             self._location[str(i)][0:3] = left_location[i - 1].tolist()
@@ -338,7 +337,7 @@ class Alarm(draw_map.CompeteMap):
         if isinstance(locations, np.ndarray):
             pred_loc = []
             locations[1:3] = np.around(locations[1:3])
-            for armor in range(1, 11):
+            for armor in possible_cls_all_sides:
                 # 检测到装甲板
                 if (locations[:, 0] == armor).any():
                     # 使用雷达点云定位

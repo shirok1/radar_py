@@ -7,6 +7,11 @@ common.py
 import numpy as np
 import cv2
 
+# 6 为空中 (不需要识别), 7 为哨兵, 8 为飞镖 (不需要识别), 9 为雷达站 (不需要识别)
+possible_cls_one_side = [1, 2, 3, 4, 5, 7]
+# 按照裁判系统编号规范的带颜色的编号, ‘1’-‘9’ 为红方, '101'-'109' 为蓝方
+possible_cls_all_sides = possible_cls_one_side + [cls + 100 for cls in possible_cls_one_side]
+
 
 def is_inside(box: np.ndarray, point: np.ndarray):
     """
@@ -108,7 +113,7 @@ def armor_filter(armors: np.ndarray):
     """
 
     # 直接取最高置信度
-    ids = range(1, 11)
+    ids = possible_cls_all_sides
     if armors.shape[0] != 0:
         results = []
         for i in ids:

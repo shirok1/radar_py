@@ -360,13 +360,17 @@ class Predictor(object):
             anchor = self.net2_anchors[n * self.net2_grid[n][0] + c]
             xc = output[i, :]
             cls_id = np.argmax(xc[15:15 + 9])  # 选择置信度最高的 class
-            col_id = np.argmax(xc[24:])  # 选择置信度最高的 color
-            # 仅保留 class 在 1~5 的情况
-            if cls_id not in range(1, 6):
+            col_id = np.argmax(xc[15 + 9:15 + 9 + 4])  # 选择置信度最高的 color
+            # 仅保留 class 在 0~5 的情况
+            if cls_id in range(1, 6):  # 1~5
+                cls_id = cls_id
+            elif cls_id == 0:  # 哨兵
+                cls_id = 7
+            else:
                 continue
-            # 因为只输出 class 一个量，所以通过 +5 来区分红色
-            if col_id == 1:
-                cls_id += 5
+            # 因为只输出 class 一个量，所以通过 +100 来区分蓝色
+            if col_id == 0:
+                cls_id += 100
             obj_conf = float(xc[4])  # 置信度
             # 计算检测框中心点在图片中的坐标
             centerX = int(
