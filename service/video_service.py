@@ -97,10 +97,11 @@ class VideoReader(StartStoppableTrait):
             self._frame_provider.push(ndarray)
             self._fps_counter.update()
             self._timestamp_pos = frame.pts
+            # 在剩下 1 秒时重置进度，防止视频流迭代器结束
             if self._timestamp_pos + int(1 / self._second_per_ts) + 1 >= self._ts_duration:
                 logger.warning("快读到结尾了，重置")
                 self.reset()
-                return
+                continue
         # while not self._is_terminated:
         #     for frame in self._video.decode(self._video_stream):
         #         self._frame_provider.push(frame.to_ndarray(format="bgr24"))
