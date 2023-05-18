@@ -169,8 +169,8 @@ class location_Delaunay(object):
             magnitude3 = pt - pts[0]
             k_1 = np.dot(magnitude1, magnitude3) / self._mag_pow(magnitude1)
             # 德劳内投影点对应世界坐标点
-            h_1 = self.w_points(np.where(self.cam_points == pts[0]))
-            h_2 = self.w_points(np.where(self.cam_points == pts[1]))
+            h_1 = self.w_points[np.argmax(self.cam_points == pts[0])]
+            h_2 = self.w_points[np.argmax(self.cam_points == pts[1])]
             # 定比分点计算待定位点坐标
             return h_1 * (1 - k_1) + h_2 * k_1
 
