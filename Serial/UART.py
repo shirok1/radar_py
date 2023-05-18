@@ -1,8 +1,8 @@
 """
 串口通信
 """
-from .official import official_Judge_Handler, Game_data_define
-from .port_operation import Port_operate
+from Serial.official import official_Judge_Handler, Game_data_define
+from Serial.port_operation import Port_operate
 
 buffer = [0] * 50
 bufferbyte = 0

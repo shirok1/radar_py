@@ -7,7 +7,7 @@ import numpy as np
 
 from config import BO, my_color
 from config_type import TeamColor
-from official import official_Judge_Handler
+from Serial.official import official_Judge_Handler
 
 
 class Port_operate(object):
