@@ -33,6 +33,7 @@ class VideoReader(StartStoppableTrait):
         self._record_list: Optional[list[Record]] = None
         logger.info(f"正在打开 {Path(config.path).name}")
         self._video: av.container.InputContainer = av.container.open(config.path)
+        self._video.gen_pts = True  # 为无 pts 的帧生成 pts
         video_streams: list[av.video.VideoStream] = self._video.streams.video
         if len(video_streams) == 0:
             raise ValueError(f"文件 {config.path} 中没有视频流")
