@@ -147,8 +147,8 @@ class Alarm(draw_map.CompeteMap):
             if TeamColor.from_lower(team) != my_color:
                 targets = []
                 # 对所有装甲板和所有区域，检测装甲板是否在区域内
-                for armor in list(self._location.keys())[0:5]:
-                    l_ = np.float32(self._location[armor])
+                for armor in possible_cls_all_sides:
+                    l_ = np.float32(self._location[str(armor)])
                     # 在区域内
                     if is_inside_polygon(np.array(self._region[loc])[:, :2], l_[0:2]):
                         targets.append(armor)
@@ -192,6 +192,7 @@ class Alarm(draw_map.CompeteMap):
                 if len(targets):
                     # 发送预警
                     self._add_twinkle(loc)
+                    logger.info(f"区域预警：「{target}」中出现了敌方的 {targets}")
                     # targets_text = ' '.join(targets)
                     # str_text += f"{target}出现{team} {targets_text}\n"
 
