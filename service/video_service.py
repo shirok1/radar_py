@@ -82,12 +82,14 @@ class VideoReader(StartStoppableTrait):
             while self._is_paused:
                 time.sleep(SLEEP_TIME)
                 continue
-            if self._last_time + self._get_spf() > time.time():
-                time.sleep(self._last_time + self._get_spf() - time.time())
-            self._last_time = time.time()
+            now = time.time()
+            if self._last_time + self._get_spf() > now:
+                time.sleep(self._last_time + self._get_spf() - now)
+            self._last_time = now
             frame: av.video.VideoFrame
             if frame.pts is None:
-                print(frame)
+                logger.warning(f"视频帧损坏: {frame}")
+                continue
             ndarray = frame.to_ndarray(format="bgr24")
             ndarray = cv2.putText(ndarray, f"pts: {frame.pts}/{self._video_stream.duration}", (10, 40),
                                   cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1, cv2.LINE_AA)
