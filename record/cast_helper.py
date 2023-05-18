@@ -5,7 +5,9 @@
 from enum import Enum
 
 import numpy as np
+
 import proto.rdr.lidar_pb2
+
 
 class DataTypeEnum(Enum):
     """
@@ -16,6 +18,7 @@ class DataTypeEnum(Enum):
     LiDARRawDump = "lidar_raw_dump"
     PositionUpdate = "position_update"
 
+
 def numpy_to_bson(data: np.ndarray):
     return {
         "shape": data.shape,
@@ -23,8 +26,10 @@ def numpy_to_bson(data: np.ndarray):
         "data": data.tobytes()
     }
 
+
 def _cast_network_output_np(data: np.ndarray):
     return numpy_to_bson(data)
+
 
 def _cast_network_output_typed(data: np.ndarray):
     return {
@@ -35,6 +40,7 @@ def _cast_network_output_typed(data: np.ndarray):
         } for bbox in data]
     }
 
+
 def _cast_lidar_raw_dump(data: proto.rdr.lidar_pb2.LiDARRawPoints, device: str):
     return {
         "rdr_timestamp": data.timestamp.ToDatetime(tzinfo=None),
@@ -42,10 +48,12 @@ def _cast_lidar_raw_dump(data: proto.rdr.lidar_pb2.LiDARRawPoints, device: str):
         "points": [(point.x, point.y, point.z) for point in data.points]
     }
 
+
 def _cast_position_update(data: dict):
     return {
         "armors": data
     }
+
 
 data_cast = {
     DataTypeEnum.NetworkOutputNp: lambda data: (DataTypeEnum.NetworkOutputNp, _cast_network_output_np(data)),

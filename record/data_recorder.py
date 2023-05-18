@@ -4,6 +4,7 @@
 
 import datetime
 from typing import Tuple
+
 import pymongo
 
 
@@ -14,17 +15,19 @@ class DataRecorder:
     _client: pymongo.MongoClient
     _init_timestamp: datetime.datetime
 
-    def connect(url: str):
-        DataRecorder._client = pymongo.MongoClient(url)
-        DataRecorder._init_timestamp = datetime.datetime.utcnow()
-    
-    def push(x: Tuple[str, dict]):
-        if (not hasattr(DataRecorder, "_client")):
+    @classmethod
+    def connect(cls, url: str):
+        cls._client = pymongo.MongoClient(url)
+        cls._init_timestamp = datetime.datetime.utcnow()
+
+    @classmethod
+    def push(cls, x: Tuple[str, dict]):
+        if not hasattr(cls, "_client"):
             raise RuntimeError("DataRecorder not connected")
-        collection, data = x
-        DataRecorder._client["radar"][collection].insert_one({
-            "init_timestamp": DataRecorder._init_timestamp,
+        collection_enum, data = x
+        collection = str(collection_enum)
+        cls._client["radar"][collection].insert_one({
+            "init_timestamp": cls._init_timestamp,
             "timestamp": datetime.datetime.utcnow(),
             **data
         })
-
