@@ -111,10 +111,9 @@ class CompeteMap(object):
         画定位点
         """
         img = self._out_map
-        if armor > 5:
+        if armor < 100:
             color = (0, 0, 255)
             last_color = (0, 0, 127)
-            armor -= 5
         else:
             color = (255, 0, 0)
             last_color = (127, 0, 0)
