@@ -619,7 +619,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
         if not isinstance(self.__res_left, np.ndarray):
             return
         from config import net1_cls, net2_cls_names
-        color = (255, 0, 255)
+        color_red = (0, 0, 255)
+        color_blue = (255, 0, 0)
+        color_green = (0, 255, 0)
         line_thickness = 3
         # 线条和字体的thickness
         tl = line_thickness
@@ -627,9 +629,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
             # 连接前res为 (N,6) ，net2_output为 (N,8)，i[11]为小车类型（对应编号）
             if not np.isnan(i[11]):
                 # 类型（car/watcher/base）、置信度、小车编号
-                label = f'{net1_cls[int(i[5])]} {i[4]:.2f}  {net2_cls_names[int(i[11])]}'
+                label = f'{net1_cls[int(i[5])]} {i[4]:.2f} {"red" if i[12] == 1 else "blue"}'
             else:
                 label = f'{net1_cls[int(i[5])]} {i[4]:.2f} None'
+            if i[12] == 0:  # 蓝方
+                color = color_blue
+            elif i[12] == 1:  # 红方
+                color = color_red
+            else:  # 未知
+                color = color_green
             # Plots one bounding box on image img
             # 再输出图像上画一个框
             if not np.isnan(i[11]):
