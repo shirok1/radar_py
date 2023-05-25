@@ -37,7 +37,7 @@ class RdrLiDARService(StartStoppableTrait):
         self._is_terminated = False
         self._fps_counter = FpsCounter()
 
-        self._depth_image = np.full(config.resolution, np.nan, dtype=np.uint32)
+        self._depth_image = np.full(config.resolution, np.nan, dtype=float)
         self._cam_config = neo_camera_config[config.camera_name]
         self._location = CameraLocation.from_checkpoint("cam_left_red")
 
@@ -82,9 +82,9 @@ class RdrLiDARService(StartStoppableTrait):
                 # logger.info(point_in_image[:, 0].shape)
                 # logger.info(np_msg[2].shape)
                 for point in np.column_stack((point_in_image[:, 0], np_msg[2].T)):
-                    x, y, z = point.T.astype(np.int32)
+                    x, y, _ = point.T.astype(np.int32)
                     if 0 <= x < self._config.resolution[1] and 0 <= y < self._config.resolution[0]:
-                        self._depth_image[int(y), int(x)] = z
+                        self._depth_image[int(y), int(x)] = point.T[2]
                 count += 1
                 # if count % 100 == 0:
                 #     count = 0
