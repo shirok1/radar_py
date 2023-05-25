@@ -19,15 +19,9 @@ class ImageClient:
         self.socket: zmq.Socket = self.context.socket(zmq.constants.SocketType.SUB)
         self.socket.connect(endpoint)
         self.socket.subscribe(b'')
-        # self.socket.RCVTIMEO = 1000
-
-        self.poller = zmq.Poller()
-        self.poller.register(self.socket, zmq.POLLIN)
-        # self.socket.close()
 
     def recv(self, timeout=1000) -> Optional[np.ndarray]:
-        # data = self.socket.recv()
-        ok = self.poller.poll(timeout)
+        ok = self.socket.poll(timeout)
         if not ok:
             return None
         data = self.socket.recv()
@@ -63,14 +57,12 @@ class ImageAndArmorClient:
 class LiDARClient:
     def __init__(self, endpoint: str, context=None):
         self.context = context or zmq.Context.instance()
-        self.socket = self.context.socket(zmq.constants.SUB)
+        self.socket: zmq.Socket = self.context.socket(zmq.constants.SUB)
         self.socket.connect(endpoint)
         self.socket.subscribe(b'')
-        self.poller = zmq.Poller()
-        self.poller.register(self.socket, zmq.POLLIN)
 
     def recv(self) -> Optional[list[tuple[int, int, int]]]:
-        ok = self.poller.poll(1000)
+        ok = not self.socket.closed and self.socket.poll(1000)
         if not ok:
             return None
         data = self.socket.recv()
