@@ -57,19 +57,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):  # 这个地方要注意
         self._use_lidar = not USEABLE["locate_state"][0]
         self.__cam_left = 'cam_left' in cameras
         self.__cam_right = 'cam_right' in cameras
-        self.__serial = USEABLE['serial']
-
-        if self.__serial:
-            # import threading
-            import serial
-            from Serial.UART import read, write
-            ser = serial.Serial("/dev/ttyACM0", 115200, timeout=1)
-            self.read_thr = threading.Thread(target=read, args=(ser,))
-            self.write_thr = threading.Thread(target=write, args=(ser,))
-            self.read_thr.daemon = True
-            self.write_thr.daemon = True
-            self.write_thr.start()
-            self.read_thr.start()
 
         self.draw_module = drawing()  # 绘图及信息管理类
         self.text_api = lambda x: self.draw_module.update(x)
