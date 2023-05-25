@@ -54,6 +54,7 @@ class RdrLiDARService(StartStoppableTrait):
         self._spinner.join()
         # self._client.close()
 
+    @logger.catch()
     def _spin(self):
         count = 0
         while not self._is_terminated:

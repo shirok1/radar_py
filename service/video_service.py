@@ -76,6 +76,7 @@ class VideoReader(StartStoppableTrait):
         """
         return lambda: self._fps_counter.fps
 
+    @logger.catch()
     def _spin(self):
         for frame in self._video.decode(self._video_stream):
             if self._is_terminated:

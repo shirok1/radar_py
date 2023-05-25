@@ -77,6 +77,7 @@ class ProcessService(StartStoppableTrait):
     def get_fps_getter(self):
         return lambda: self._fps_counter.fps
 
+    @logger.catch()
     def _spin(self):
         # logger.info(f"子线程开始: {self._name}")
         while not self._is_terminated:

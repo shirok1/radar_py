@@ -76,6 +76,7 @@ class HikCameraService(StartStoppableTrait):
             logger.warning(f"相机 {self._name} 非正常退出")
             self.stop()
 
+    @logger.catch()
     def _spin(self):
         while not self._is_terminated:
             result, frame = self._camera.get_img()

@@ -90,6 +90,7 @@ class RdrThread(StartStoppableTrait):
             logger.warning(f"连接到 {self._config.endpoint} 的线程未被正常停止！")
             self.stop()
 
+    @logger.catch()
     def _spin(self):
         while not self._is_terminated:
             self._fps_counter.update()

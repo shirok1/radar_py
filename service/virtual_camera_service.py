@@ -49,6 +49,7 @@ class VirtualCameraService(StartStoppableTrait):
             logger.warning(f"虚拟相机 {self._name} 非正常退出")
             self.stop()
 
+    @logger.catch()
     def _spin(self):
         with pyvirtualcam.Camera(
                 width=self._resolution[0],
