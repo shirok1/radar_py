@@ -23,12 +23,10 @@ class location_Delaunay(object):
     w_points = None # 投影点
     cam_rect = ()   # 相机能拍摄到的矩形范围
     rect_points = None  # 矩形范围的顶点
-    debug_mode = False  # 调试模式
 
-    def __init__(self, cam_side: str, debug: bool = False, choose=list(range(0, 80, 1)), rvec=None, tvec=None):
-        self.debug_mode = debug
+    def __init__(self, cam_side: str, choose=list(range(0, 80, 1)), rvec=None, tvec=None):
         if cam_side in ["cam_left", "cam_right"]:
-            t = Delaunary_points[int(debug)][cam_side]
+            t = Delaunary_points[0][cam_side]
             self.cam_rect = t[0]
             # 德劳内标记点
             self.c_points = np.array(t[1]).reshape((-1, 3)) * 1000

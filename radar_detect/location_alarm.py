@@ -11,7 +11,7 @@ import numpy as np
 from loguru import logger
 
 import ui.map.draw_map as draw_map  # 引入draw_map模块，使用其中的CompeteMap类
-from config import my_color, my_viewing_position, cam_config, real_size, region, test_region, choose
+from config import my_color, my_viewing_position, cam_config, real_size, region, choose
 from config_type import TeamColor
 from radar_detect.common import is_inside_polygon, possible_cls_all_sides
 from radar_detect.location_Delaunay import location_Delaunay
@@ -45,18 +45,12 @@ class Alarm(draw_map.CompeteMap):
         """
         :param api:主程序显示api，传入画图程序进行调用（不跨线程使用,特别是Qt）
         :param touch_api:log api
-        :param debug:debug模式
         """
-        self._debug = debug
         # 显示api
         self._touch_api = touch_api
         self.state = state_
-        if debug:
-            super(Alarm, self).__init__(test_region, real_size, api)
-            self._region = test_region
-        else:
-            super(Alarm, self).__init__(region, real_size, api)
-            self._region = region
+        super(Alarm, self).__init__(region, real_size, api)
+        self._region = region
 
         self.reset_thre = 300
         self.reset_count = 0
